@@ -18,9 +18,7 @@ CREATE TABLE IF NOT EXISTS ${catalog}.`cfihos_property`.`property` (
   `valid_to` TIMESTAMP COMMENT '[Implementation] End of validity for this published version; null means current.',
   `is_current` BOOLEAN NOT NULL COMMENT '[Implementation] Whether this is the current published version.',
   `recorded_at` TIMESTAMP NOT NULL COMMENT '[Implementation] Time this version was recorded by the consolidation hub.',
-  CONSTRAINT `pk_property` PRIMARY KEY (`property_name`) NOT ENFORCED,
-  CONSTRAINT `fk_property_unit_of_measure_dimension_code` FOREIGN KEY (`unit_of_measure_dimension_code`) REFERENCES ${catalog}.`cfihos_property`.`unit_of_measure_dimension` (`unit_of_measure_dimension_code`) NOT ENFORCED,
-  CONSTRAINT `fk_property_property_picklist_name` FOREIGN KEY (`property_picklist_name`) REFERENCES ${catalog}.`cfihos_property`.`property_picklist` (`property_picklist_name`) NOT ENFORCED
+  CONSTRAINT `pk_property` PRIMARY KEY (`property_name`) NOT ENFORCED
 )
 COMMENT 'A type of feature that is used to distinguish and describe tags, equipment, models) or their class CFIHOS v2.0-aligned. Declared constraints are informational; validation jobs perform enforcement.'
 TBLPROPERTIES (
@@ -44,7 +42,6 @@ CREATE TABLE IF NOT EXISTS ${catalog}.`cfihos_property`.`tag_or_equipment_class_
   `is_current` BOOLEAN NOT NULL COMMENT '[Implementation] Whether this is the current published version.',
   `recorded_at` TIMESTAMP NOT NULL COMMENT '[Implementation] Time this version was recorded by the consolidation hub.',
   CONSTRAINT `pk_tag_or_equipment_class_property` PRIMARY KEY (`tag_or_equipment_class_name`, `property_name`) NOT ENFORCED,
-  CONSTRAINT `fk_tag_or_equipment_class_property_tag_or_equipment_class_name` FOREIGN KEY (`tag_or_equipment_class_name`) REFERENCES ${catalog}.`cfihos_classification`.`non_abstract_tag_or_equipment_class` (`tag_or_equipment_class_name`) NOT ENFORCED,
   CONSTRAINT `fk_tag_or_equipment_class_property_property_name` FOREIGN KEY (`property_name`) REFERENCES ${catalog}.`cfihos_property`.`property` (`property_name`) NOT ENFORCED
 )
 COMMENT 'A characteristic, or property, that a tag or equipment class has CFIHOS v2.0-aligned. Declared constraints are informational; validation jobs perform enforcement.'
@@ -106,8 +103,7 @@ CREATE TABLE IF NOT EXISTS ${catalog}.`cfihos_property`.`tag_property` (
   `is_current` BOOLEAN NOT NULL COMMENT '[Implementation] Whether this is the current published version.',
   `recorded_at` TIMESTAMP NOT NULL COMMENT '[Implementation] Time this version was recorded by the consolidation hub.',
   CONSTRAINT `pk_tag_property` PRIMARY KEY (`plant_code`, `tag_name`) NOT ENFORCED,
-  CONSTRAINT `fk_tag_property_property_name` FOREIGN KEY (`property_name`) REFERENCES ${catalog}.`cfihos_property`.`property` (`property_name`) NOT ENFORCED,
-  CONSTRAINT `fk_tag_property_unit_of_measure_name` FOREIGN KEY (`unit_of_measure_name`) REFERENCES ${catalog}.`cfihos_property`.`unit_of_measure` (`unit_of_measure_name`) NOT ENFORCED
+  CONSTRAINT `fk_tag_property_property_name` FOREIGN KEY (`property_name`) REFERENCES ${catalog}.`cfihos_property`.`property` (`property_name`) NOT ENFORCED
 )
 COMMENT 'A characteristic, or property, that a tag has CFIHOS v2.0-aligned. Declared constraints are informational; validation jobs perform enforcement.'
 TBLPROPERTIES (
@@ -129,8 +125,7 @@ CREATE TABLE IF NOT EXISTS ${catalog}.`cfihos_property`.`equipment_property` (
   `recorded_at` TIMESTAMP NOT NULL COMMENT '[Implementation] Time this version was recorded by the consolidation hub.',
   CONSTRAINT `pk_equipment_property` PRIMARY KEY (`equipment_code`, `property_name`) NOT ENFORCED,
   CONSTRAINT `fk_equipment_property_equipment_code` FOREIGN KEY (`equipment_code`) REFERENCES ${catalog}.`cfihos_physical_asset`.`equipment` (`equipment_code`) NOT ENFORCED,
-  CONSTRAINT `fk_equipment_property_property_name` FOREIGN KEY (`property_name`) REFERENCES ${catalog}.`cfihos_property`.`property` (`property_name`) NOT ENFORCED,
-  CONSTRAINT `fk_equipment_property_unit_of_measure_name` FOREIGN KEY (`unit_of_measure_name`) REFERENCES ${catalog}.`cfihos_property`.`unit_of_measure` (`unit_of_measure_name`) NOT ENFORCED
+  CONSTRAINT `fk_equipment_property_property_name` FOREIGN KEY (`property_name`) REFERENCES ${catalog}.`cfihos_property`.`property` (`property_name`) NOT ENFORCED
 )
 COMMENT 'A characteristic, or property, that an equipment has CFIHOS v2.0-aligned. Declared constraints are informational; validation jobs perform enforcement.'
 TBLPROPERTIES (

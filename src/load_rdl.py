@@ -8,9 +8,12 @@ import hashlib
 import io
 import json
 import re
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+_SCRIPT_PATH = Path(globals().get("__file__", sys.argv[0])).resolve()
 
 
 def sql_name(value: str) -> str:
@@ -217,7 +220,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--catalog", required=True)
     parser.add_argument("--rdl-version", default="2.0")
     parser.add_argument(
-        "--spec-dir", type=Path, default=Path(__file__).resolve().parents[1] / "spec" / "rdl"
+        "--spec-dir", type=Path, default=_SCRIPT_PATH.parents[1] / "spec" / "rdl"
     )
     args = parser.parse_args(argv)
     from pyspark.sql import SparkSession
@@ -227,4 +230,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()

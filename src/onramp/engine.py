@@ -16,6 +16,8 @@ from typing import Any
 
 import yaml
 
+_SCRIPT_PATH = Path(globals().get("__file__", sys.argv[0])).resolve()
+
 
 def load_yaml(path: Path) -> dict[str, Any]:
     value = yaml.safe_load(path.read_text(encoding="utf-8"))
@@ -217,7 +219,7 @@ def run_spark(spark: Any, catalog: str, config: dict[str, Any], model: dict[str,
     try:
         from src.trust.who_wins import publish_claims
     except ModuleNotFoundError:  # Serverless Python-file tasks put src/ on sys.path.
-        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        sys.path.insert(0, str(_SCRIPT_PATH.parents[1]))
         from trust.who_wins import publish_claims
 
     run_id = str(uuid.uuid4())
@@ -366,10 +368,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--catalog", required=True)
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument(
-        "--model", type=Path, default=Path(__file__).resolve().parents[2] / "model" / "model.yml"
+        "--model", type=Path, default=_SCRIPT_PATH.parents[2] / "model" / "model.yml"
     )
     args = parser.parse_args(argv)
-    root = Path(__file__).resolve().parents[2]
+    root = _SCRIPT_PATH.parents[2]
     config_path = args.config
     if not config_path.exists():
         config_path = root / "src" / "onramp" / "sources" / args.config.name
@@ -392,4 +394,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()

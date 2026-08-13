@@ -28,8 +28,7 @@ CREATE TABLE IF NOT EXISTS ${catalog}.`cfihos_physical_asset`.`equipment` (
   `is_current` BOOLEAN NOT NULL COMMENT '[Implementation] Whether this is the current published version.',
   `recorded_at` TIMESTAMP NOT NULL COMMENT '[Implementation] Time this version was recorded by the consolidation hub.',
   CONSTRAINT `pk_equipment` PRIMARY KEY (`equipment_code`) NOT ENFORCED,
-  CONSTRAINT `fk_equipment_equipment_class_name` FOREIGN KEY (`equipment_class_name`) REFERENCES ${catalog}.`cfihos_classification`.`equipment_class` (`equipment_class_name`) NOT ENFORCED,
-  CONSTRAINT `fk_equipment_iso_currency_code` FOREIGN KEY (`iso_currency_code`) REFERENCES ${catalog}.`cfihos_physical_asset`.`iso_currency` (`iso_currency_code`) NOT ENFORCED
+  CONSTRAINT `fk_equipment_equipment_class_name` FOREIGN KEY (`equipment_class_name`) REFERENCES ${catalog}.`cfihos_classification`.`equipment_class` (`equipment_class_name`) NOT ENFORCED
 )
 COMMENT 'A physical device designed to perform a function CFIHOS v2.0-aligned. Declared constraints are informational; validation jobs perform enforcement.'
 TBLPROPERTIES (

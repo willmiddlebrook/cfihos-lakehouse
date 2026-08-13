@@ -16,11 +16,7 @@ CREATE TABLE IF NOT EXISTS ${catalog}.`cfihos_functional_asset`.`plant` (
   `valid_to` TIMESTAMP COMMENT '[Implementation] End of validity for this published version; null means current.',
   `is_current` BOOLEAN NOT NULL COMMENT '[Implementation] Whether this is the current published version.',
   `recorded_at` TIMESTAMP NOT NULL COMMENT '[Implementation] Time this version was recorded by the consolidation hub.',
-  CONSTRAINT `pk_plant` PRIMARY KEY (`plant_code`) NOT ENFORCED,
-  CONSTRAINT `fk_plant_site_code` FOREIGN KEY (`site_code`) REFERENCES ${catalog}.`cfihos_functional_asset`.`site` (`site_code`) NOT ENFORCED,
-  CONSTRAINT `fk_plant_iso_language_code` FOREIGN KEY (`iso_language_code`) REFERENCES ${catalog}.`cfihos_document_master`.`iso_language` (`iso_language_code`) NOT ENFORCED,
-  CONSTRAINT `fk_plant_measurement_system_code` FOREIGN KEY (`measurement_system_code`) REFERENCES ${catalog}.`cfihos_property`.`measurement_system` (`measurement_system_code`) NOT ENFORCED,
-  CONSTRAINT `fk_plant_industrial_complex_code` FOREIGN KEY (`industrial_complex_code`) REFERENCES ${catalog}.`cfihos_functional_asset`.`industrial_complex` (`industrial_complex_code`) NOT ENFORCED
+  CONSTRAINT `pk_plant` PRIMARY KEY (`plant_code`) NOT ENFORCED
 )
 COMMENT 'An assembly of equipment that perform a physical or chemical process, including production, transportation and storage CFIHOS v2.0-aligned. Declared constraints are informational; validation jobs perform enforcement.'
 TBLPROPERTIES (
@@ -76,8 +72,7 @@ CREATE TABLE IF NOT EXISTS ${catalog}.`cfihos_functional_asset`.`tag` (
   `is_current` BOOLEAN NOT NULL COMMENT '[Implementation] Whether this is the current published version.',
   `recorded_at` TIMESTAMP NOT NULL COMMENT '[Implementation] Time this version was recorded by the consolidation hub.',
   CONSTRAINT `pk_tag` PRIMARY KEY (`plant_code`, `tag_name`) NOT ENFORCED,
-  CONSTRAINT `fk_tag_tag_class_name` FOREIGN KEY (`tag_class_name`) REFERENCES ${catalog}.`cfihos_classification`.`tag_class` (`tag_class_name`) NOT ENFORCED,
-  CONSTRAINT `fk_tag_safety_critical_item_group_code` FOREIGN KEY (`safety_critical_item_group_code`) REFERENCES ${catalog}.`cfihos_physical_asset`.`safety_critical_item_group` (`safety_critical_item_group_code`) NOT ENFORCED
+  CONSTRAINT `fk_tag_tag_class_name` FOREIGN KEY (`tag_class_name`) REFERENCES ${catalog}.`cfihos_classification`.`tag_class` (`tag_class_name`) NOT ENFORCED
 )
 COMMENT 'An object designed for performing functional requirements and serving as a specification for equipment CFIHOS v2.0-aligned. Declared constraints are informational; validation jobs perform enforcement.'
 TBLPROPERTIES (

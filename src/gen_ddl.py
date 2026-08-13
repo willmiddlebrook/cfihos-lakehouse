@@ -41,12 +41,15 @@ def table_name(catalog: str, entity: dict[str, Any]) -> str:
 
 
 def _foreign_keys(
-    catalog: str, entity: dict[str, Any], entities: dict[str, dict[str, Any]]
+    catalog: str,
+    entity: dict[str, Any],
+    entities: dict[str, dict[str, Any]],
+    generated_entities: set[str],
 ) -> list[str]:
     constraints = []
     for attribute in entity["attributes"]:
         target_name = attribute.get("references")
-        if not target_name or target_name not in entities:
+        if not target_name or target_name not in generated_entities:
             continue
         target = entities[target_name]
         target_pk = [a for a in target["attributes"] if a["requirement"] == "identifier"]
@@ -66,6 +69,7 @@ def render_entity(
     catalog: str,
     entity: dict[str, Any],
     entities: dict[str, dict[str, Any]],
+    generated_entities: set[str],
     technical_columns: list[dict[str, Any]],
 ) -> str:
     columns = []
@@ -97,7 +101,7 @@ def render_entity(
             f"  CONSTRAINT {quote_identifier('pk_' + entity['name'])} PRIMARY KEY "
             f"({', '.join(primary_key)}) NOT ENFORCED"
         )
-    constraints.extend(_foreign_keys(catalog, entity, entities))
+    constraints.extend(_foreign_keys(catalog, entity, entities, generated_entities))
     body = ",\n".join(columns + constraints)
     comment = (
         f"{entity['definition']} CFIHOS v2.0-aligned. "
@@ -117,6 +121,7 @@ def render_entity(
 def generate(model: dict[str, Any], output_dir: Path, catalog: str = "${catalog}") -> list[Path]:
     entities = model["entities"]
     spine_names = model["generation"]["spine_entities"]
+    generated_entities = set(spine_names)
     missing = sorted(set(spine_names) - entities.keys())
     if missing:
         raise ValueError(f"model generation profile references missing entities: {missing}")
@@ -139,6 +144,7 @@ def generate(model: dict[str, Any], output_dir: Path, catalog: str = "${catalog}
                     catalog,
                     entity,
                     entities,
+                    generated_entities,
                     model["generation"]["technical_columns"],
                 )
             )

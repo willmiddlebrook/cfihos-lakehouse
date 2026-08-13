@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 from typing import Any
+
+_SCRIPT_PATH = Path(globals().get("__file__", sys.argv[0])).resolve()
 
 
 def split_sql_statements(sql: str) -> list[str]:
@@ -53,11 +56,18 @@ def split_sql_statements(sql: str) -> list[str]:
     return statements
 
 
-def deploy(spark: Any, root: Path, catalog: str) -> None:
+def ensure_catalog(spark: Any, catalog: str) -> None:
+    existing = {row[0] for row in spark.sql("SHOW CATALOGS").collect()}
+    if catalog in existing:
+        return
     spark.sql(
         f"CREATE CATALOG IF NOT EXISTS `{catalog}` "
         "COMMENT 'CFIHOS v2.0-aligned consolidation hub'"
     )
+
+
+def deploy(spark: Any, root: Path, catalog: str) -> None:
+    ensure_catalog(spark, catalog)
     paths = [
         *sorted((root / "src" / "ddl").glob("*.sql")),
         root / "src" / "trust" / "ddl_idmap.sql",
@@ -80,9 +90,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     from pyspark.sql import SparkSession
 
-    deploy(SparkSession.builder.getOrCreate(), Path(__file__).resolve().parents[1], args.catalog)
+    deploy(SparkSession.builder.getOrCreate(), _SCRIPT_PATH.parents[1], args.catalog)
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()

@@ -5,11 +5,14 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 import uuid
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+_SCRIPT_PATH = Path(globals().get("__file__", sys.argv[0])).resolve()
 
 
 def validate(spark: Any, catalog: str, model: dict[str, Any]) -> list[dict[str, Any]]:
@@ -105,7 +108,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--catalog", required=True)
     parser.add_argument(
-        "--model", type=Path, default=Path(__file__).resolve().parents[1] / "model" / "model.yml"
+        "--model", type=Path, default=_SCRIPT_PATH.parents[1] / "model" / "model.yml"
     )
     args = parser.parse_args(argv)
     if not re.fullmatch(r"[a-z][a-z0-9_]*", args.catalog):
@@ -120,4 +123,5 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    if main():
+        raise RuntimeError("CFIHOS constraint validation failed")

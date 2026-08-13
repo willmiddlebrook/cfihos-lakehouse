@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import time
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+_SCRIPT_PATH = Path(globals().get("__file__", sys.argv[0])).resolve()
 
 
 def _fixture_value(field: Any, sequence: int) -> Any:
@@ -238,11 +241,11 @@ def main() -> int:
     from pyspark.sql import SparkSession
 
     results = run(
-        SparkSession.builder.getOrCreate(), args.catalog, Path(__file__).resolve().parents[1]
+        SparkSession.builder.getOrCreate(), args.catalog, _SCRIPT_PATH.parents[1]
     )
     print(json.dumps(results, indent=2))
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()

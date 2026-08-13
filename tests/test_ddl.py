@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import yaml
@@ -25,3 +26,11 @@ def test_every_spine_table_has_attribution_comments_and_informational_constraint
     assert "PRIMARY KEY" in sql
     assert "NOT ENFORCED" in sql
     assert "constraints_enforced' = 'false" in sql
+
+
+def test_generated_foreign_keys_reference_only_generated_spine_tables() -> None:
+    model = yaml.safe_load((ROOT / "model" / "model.yml").read_text(encoding="utf-8"))
+    generated_entities = set(model["generation"]["spine_entities"])
+    sql = "\n".join(path.read_text(encoding="utf-8") for path in (ROOT / "src/ddl").glob("*.sql"))
+    referenced_tables = set(re.findall(r"REFERENCES [^.]+\.`[^`]+`\.`([^`]+)`", sql))
+    assert referenced_tables <= generated_entities
