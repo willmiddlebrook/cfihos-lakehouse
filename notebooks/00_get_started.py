@@ -23,20 +23,22 @@ sys.path.insert(0, str(repo_root))
 
 from src.identifiers import validate_identifier
 
-dbutils.widgets.text("catalog", "cfihos_demo")
-catalog = validate_identifier(dbutils.widgets.get("catalog").strip())
+if "catalog" not in dbutils.widgets.getAll():
+    dbutils.widgets.text("catalog", "cfihos_demo")
 
 # COMMAND ----------
 # MAGIC %md
 # MAGIC ## Create the standard's empty tables
 # MAGIC
-# MAGIC If `CREATE CATALOG` is forbidden in your workspace, ask an administrator to
-# MAGIC pre-create the catalog named above, then rerun this cell. The deployer detects
-# MAGIC an existing catalog and continues inside it.
+# MAGIC Set the `catalog` widget before running this cell. If `CREATE CATALOG` is
+# MAGIC forbidden in your workspace, ask an administrator to pre-create the catalog
+# MAGIC and grant you `USE CATALOG` plus `CREATE SCHEMA`. The deployer detects an
+# MAGIC existing catalog and continues inside it.
 
 # COMMAND ----------
 from src.deploy_foundation import deploy
 
+catalog = validate_identifier(dbutils.widgets.get("catalog").strip())
 deploy(spark, repo_root, catalog)
 
 # COMMAND ----------
@@ -50,6 +52,7 @@ deploy(spark, repo_root, catalog)
 # COMMAND ----------
 from src.load_rdl import load_rdl
 
+catalog = validate_identifier(dbutils.widgets.get("catalog").strip())
 load_rdl(spark, repo_root / "spec" / "rdl", catalog, "2.0")
 
 # COMMAND ----------
@@ -60,9 +63,11 @@ load_rdl(spark, repo_root / "spec" / "rdl", catalog, "2.0")
 # MAGIC The second shows five official equipment-class vocabulary rows.
 
 # COMMAND ----------
+catalog = validate_identifier(dbutils.widgets.get("catalog").strip())
 display(spark.sql(f"DESCRIBE TABLE {catalog}.cfihos_functional_asset.tag"))
 
 # COMMAND ----------
+catalog = validate_identifier(dbutils.widgets.get("catalog").strip())
 display(
     spark.sql(
         f"""SELECT equipment_class_cfihos_unique_code, equipment_class_name
@@ -77,4 +82,4 @@ display(
 # MAGIC %md
 # MAGIC The empty standard tables and the vocabulary are ready. In Catalog Explorer,
 # MAGIC create the `bronze` schema and use **Create table from file** for the demo CSVs
-# MAGIC under `tutorial/`. Then open `01_conform.py`.
+# MAGIC under `tutorial/`. Then open `01_conform.py` and use this exact same catalog.
