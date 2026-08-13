@@ -38,6 +38,14 @@ def test_core_notebooks_use_databricks_source_format() -> None:
         assert "# COMMAND ----------" in contents
         assert "# MAGIC %md" in contents
 
+        body = contents.removeprefix("# Databricks notebook source\n")
+        for command in body.split("# COMMAND ----------"):
+            lines = [line for line in command.splitlines() if line.strip()]
+            if any(line.startswith("# MAGIC") for line in lines):
+                assert all(line.startswith("# MAGIC") for line in lines), (
+                    f"{name} mixes Markdown magic with Python in one command"
+                )
+
 
 def test_experimental_scope_and_open_issues_are_recorded_verbatim() -> None:
     contents = (ROOT / "experimental" / "README.md").read_text(encoding="utf-8")

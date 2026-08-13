@@ -1,5 +1,4 @@
 # Databricks notebook source
-# ruff: noqa: E402, F821
 # MAGIC %md
 # MAGIC # 01 · Conform one source table
 # MAGIC
@@ -10,6 +9,7 @@
 # MAGIC Notebook original to this kit. CFIHOS materials © IOGP JIP36, CC BY 4.0.
 
 # COMMAND ----------
+# ruff: noqa: E402, F821
 import sys
 from pathlib import Path
 
