@@ -1,6 +1,6 @@
 -- CFIHOS materials are published by IOGP JIP36 under CC BY 4.0.
 -- This generated output is CFIHOS v2.0-aligned; it is not CFIHOS certified.
--- PK/FK constraints below are informational. The validation job performs enforcement.
+-- PK/FK constraints are informational. The validation job performs enforcement.
 
 CREATE SCHEMA IF NOT EXISTS ${catalog}.`cfihos_physical_asset` COMMENT 'CFIHOS v2.0-aligned physical asset subject area.' ;
 
@@ -27,8 +27,7 @@ CREATE TABLE IF NOT EXISTS ${catalog}.`cfihos_physical_asset`.`equipment` (
   `valid_to` TIMESTAMP COMMENT '[Implementation] End of validity for this published version; null means current.',
   `is_current` BOOLEAN NOT NULL COMMENT '[Implementation] Whether this is the current published version.',
   `recorded_at` TIMESTAMP NOT NULL COMMENT '[Implementation] Time this version was recorded by the consolidation hub.',
-  CONSTRAINT `pk_equipment` PRIMARY KEY (`equipment_code`) NOT ENFORCED,
-  CONSTRAINT `fk_equipment_equipment_class_name` FOREIGN KEY (`equipment_class_name`) REFERENCES ${catalog}.`cfihos_classification`.`equipment_class` (`equipment_class_name`) NOT ENFORCED
+  CONSTRAINT `pk_equipment` PRIMARY KEY (`equipment_code`) NOT ENFORCED
 )
 COMMENT 'A physical device designed to perform a function CFIHOS v2.0-aligned. Declared constraints are informational; validation jobs perform enforcement.'
 TBLPROPERTIES (

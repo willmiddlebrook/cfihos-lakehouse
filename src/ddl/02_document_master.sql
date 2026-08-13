@@ -1,6 +1,6 @@
 -- CFIHOS materials are published by IOGP JIP36 under CC BY 4.0.
 -- This generated output is CFIHOS v2.0-aligned; it is not CFIHOS certified.
--- PK/FK constraints below are informational. The validation job performs enforcement.
+-- PK/FK constraints are informational. The validation job performs enforcement.
 
 CREATE SCHEMA IF NOT EXISTS ${catalog}.`cfihos_document_master` COMMENT 'CFIHOS v2.0-aligned document master subject area.' ;
 

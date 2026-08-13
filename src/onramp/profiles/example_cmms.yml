@@ -1,0 +1,100 @@
+profile_version: 1
+source: example_cmms
+profiled_at: '2026-08-13T17:00:00Z'
+tables:
+  - table_name: cfihos_tutorial.bronze.example_locations
+    row_count: 3
+    columns:
+      - name: location_id
+        type: string
+        null_fraction: 0.0
+        distinct_count: 3
+        sample_values: [loc-001, loc-002, loc-003]
+        distinct_values: [loc-001, loc-002, loc-003]
+      - name: plant_code
+        type: string
+        null_fraction: 0.0
+        distinct_count: 1
+        sample_values: [PLANT-A]
+        distinct_values: [PLANT-A]
+      - name: functional_location_code
+        type: string
+        null_fraction: 0.0
+        distinct_count: 3
+        sample_values: [LOC-P-100, LOC-P-200, LOC-P-300]
+        distinct_values: [LOC-P-100, LOC-P-200, LOC-P-300]
+      - name: description
+        type: string
+        null_fraction: 0.0
+        distinct_count: 3
+        sample_values: [Primary pump, Secondary pump, Standby pump]
+        distinct_values: [Primary pump, Secondary pump, Standby pump]
+      - name: process_unit_code
+        type: string
+        null_fraction: 0.0
+        distinct_count: 2
+        sample_values: [UNIT-01, UNIT-02]
+        distinct_values: [UNIT-01, UNIT-02]
+      - name: tag_class_name
+        type: string
+        null_fraction: 0.0
+        distinct_count: 2
+        sample_values: [pump, valve]
+        distinct_values: [pump, valve]
+      - name: status
+        type: string
+        null_fraction: 0.0
+        distinct_count: 3
+        sample_values: [OPERATING, OUT_OF_SERVICE, UNKNOWN]
+        distinct_values: [OPERATING, OUT_OF_SERVICE, UNKNOWN]
+      - name: designed_by_company_name
+        type: string
+        null_fraction: 0.0
+        distinct_count: 2
+        sample_values: [design_org_a, design_org_b]
+        distinct_values: [design_org_a, design_org_b]
+      - name: production_critical_item_indicator
+        type: boolean
+        null_fraction: 0.0
+        distinct_count: 2
+        sample_values: ['false', 'true']
+        distinct_values: ['false', 'true']
+      - name: safety_critical_item_indicator
+        type: boolean
+        null_fraction: 0.0
+        distinct_count: 2
+        sample_values: ['false', 'true']
+        distinct_values: ['false', 'true']
+  - table_name: cfihos_tutorial.bronze.example_assets
+    row_count: 2
+    columns:
+      - name: asset_id
+        type: string
+        null_fraction: 0.0
+        distinct_count: 2
+        sample_values: [asset-001, asset-002]
+        distinct_values: [asset-001, asset-002]
+      - name: asset_code
+        type: string
+        null_fraction: 0.0
+        distinct_count: 2
+        sample_values: [EQ-001, EQ-002]
+        distinct_values: [EQ-001, EQ-002]
+      - name: serial_number
+        type: string
+        null_fraction: 0.0
+        distinct_count: 2
+        sample_values: [SN-001, SN-002]
+        distinct_values: [SN-001, SN-002]
+      - name: class_name
+        type: string
+        null_fraction: 0.0
+        distinct_count: 1
+        sample_values: [centrifugal pump]
+        distinct_values: [centrifugal pump]
+      - name: installed_on
+        type: date
+        null_fraction: 0.0
+        distinct_count: 2
+        sample_values: ['2024-01-15', '2024-02-20']
+        distinct_values: ['2024-01-15', '2024-02-20']

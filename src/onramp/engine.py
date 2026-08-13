@@ -16,6 +16,12 @@ from typing import Any
 
 import yaml
 
+try:
+    from src.identifiers import validate_identifier
+except ModuleNotFoundError:  # Serverless Python-file tasks put src/ on sys.path.
+    sys.path.insert(0, str(Path(globals().get("__file__", sys.argv[0])).resolve().parents[1]))
+    from identifiers import validate_identifier
+
 _SCRIPT_PATH = Path(globals().get("__file__", sys.argv[0])).resolve()
 
 
@@ -28,11 +34,20 @@ def load_yaml(path: Path) -> dict[str, Any]:
 
 def validate_config(config: dict[str, Any], model: dict[str, Any]) -> list[str]:
     errors: list[str] = []
+    generated_entities = set(
+        model.get("generation", {}).get("spine_entities", [])
+        if isinstance(model.get("generation"), dict)
+        else []
+    )
     source = config.get("source")
-    if not isinstance(source, str) or not re.fullmatch(r"[a-z][a-z0-9_]*", source):
+    try:
+        validate_identifier(source)
+    except ValueError:
         errors.append("source must be a lowercase SQL identifier")
-    if config.get("arrives_as") not in {"table", "files"}:
-        errors.append("arrives_as must be table or files")
+    if config.get("arrives_as") != "table":
+        errors.append("arrives_as must be table")
+    if config.get("origination", "steward_only") not in {"founding", "steward_only"}:
+        errors.append("origination must be founding or steward_only")
     if config.get("unmatched") != "review_queue":
         errors.append("unmatched must be review_queue")
     feeds = config.get("feeds")
@@ -43,6 +58,11 @@ def validate_config(config: dict[str, Any], model: dict[str, Any]) -> list[str]:
         if entity_name not in model["entities"]:
             errors.append(f"feed {entity_name}: not present in model.yml")
             continue
+        if entity_name not in generated_entities:
+            errors.append(
+                f"feed {entity_name}: entity is not selected in "
+                "model.generation.spine_entities and has no deployed registry table"
+            )
         if not isinstance(feed, dict):
             errors.append(f"feed {entity_name}: must be a mapping")
             continue
@@ -50,6 +70,9 @@ def validate_config(config: dict[str, Any], model: dict[str, Any]) -> list[str]:
             if not feed.get(key):
                 errors.append(f"feed {entity_name}: missing {key}")
         fields = feed.get("fields", {})
+        if not isinstance(fields, dict):
+            errors.append(f"feed {entity_name}: fields must be a mapping")
+            fields = {}
         attributes = {item["name"] for item in model["entities"][entity_name]["attributes"]}
         for attribute in fields:
             if attribute not in attributes:
@@ -69,12 +92,28 @@ def validate_config(config: dict[str, Any], model: dict[str, Any]) -> list[str]:
         if entity_name not in feeds:
             errors.append(f"claim {key}: entity has no feed")
             continue
-        if attribute not in feeds[entity_name].get("fields", {}):
+        feed = feeds[entity_name]
+        if not isinstance(feed, dict):
+            errors.append(f"claim {key}: entity feed is not a mapping")
+            continue
+        fields = feed.get("fields", {})
+        fields = fields if isinstance(fields, dict) else {}
+        if attribute not in fields:
             errors.append(f"claim {key}: attribute has no feed field mapping")
-        if not isinstance(claim, dict) or not isinstance(claim.get("wins_rank"), int):
+        if not isinstance(claim, dict):
+            errors.append(f"claim {key}: wins_rank must be an integer")
+            errors.append(f"claim {key}: field must equal its feed field mapping")
+            continue
+        if not isinstance(claim.get("wins_rank"), int):
             errors.append(f"claim {key}: wins_rank must be an integer")
         elif claim["wins_rank"] < 1:
             errors.append(f"claim {key}: wins_rank must be positive")
+        expected_field = fields.get(attribute)
+        if claim.get("field") != expected_field:
+            errors.append(
+                f"claim {key}: field must equal feed mapping {expected_field!r}, "
+                f"found {claim.get('field')!r}"
+            )
     value_maps = config.get("value_maps")
     if not isinstance(value_maps, dict):
         errors.append("value_maps must be a mapping")
@@ -84,7 +123,53 @@ def validate_config(config: dict[str, Any], model: dict[str, Any]) -> list[str]:
                 errors.append(f"value map {key}: no corresponding claim")
             if not isinstance(mapping, dict) or not mapping:
                 errors.append(f"value map {key}: must be a non-empty mapping")
+    if config.get("origination", "steward_only") == "founding":
+        claimed = {
+            key
+            for key in claims
+            if isinstance(key, str) and "." in key
+        }
+        for entity_name in feeds:
+            if entity_name not in model["entities"]:
+                continue
+            required_claims = {
+                f"{entity_name}.{item['name']}"
+                for item in model["entities"][entity_name]["attributes"]
+                if item["requirement"] in {"identifier", "mandatory"}
+            }
+            missing_claims = sorted(required_claims - claimed)
+            if missing_claims:
+                errors.append(
+                    f"founding feed {entity_name}: missing required claims "
+                    + ", ".join(missing_claims)
+                )
+    try:
+        from src.onramp.config_contract import validate_value_map_targets
+    except ModuleNotFoundError:  # Serverless Python-file tasks put src/ on sys.path.
+        from onramp.config_contract import validate_value_map_targets
+
+    target_result = validate_value_map_targets(
+        config, model, _SCRIPT_PATH.parents[2] / "spec" / "rdl"
+    )
+    errors.extend(target_result.errors)
     return errors
+
+
+def validate_config_warnings(
+    config: dict[str, Any], model: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """Return structured warnings for targets that Core RDL cannot verify."""
+    try:
+        from src.onramp.config_contract import validate_value_map_targets
+    except ModuleNotFoundError:  # Serverless Python-file tasks put src/ on sys.path.
+        from onramp.config_contract import validate_value_map_targets
+
+    return [
+        warning.as_dict()
+        for warning in validate_value_map_targets(
+            config, model, _SCRIPT_PATH.parents[2] / "spec" / "rdl"
+        ).warnings
+    ]
 
 
 def normalize_value(value: Any, strip_prefixes: Iterable[str] = ()) -> str:
@@ -94,6 +179,14 @@ def normalize_value(value: Any, strip_prefixes: Iterable[str] = ()) -> str:
         if normalized.startswith(normalized_prefix):
             return normalized[len(normalized_prefix) :].strip()
     return normalized
+
+
+def unmapped_exception_id(
+    source: str, source_id: Any, key: str, source_value: Any
+) -> str:
+    """Return the stable identity of one specific untranslated source value."""
+    payload = "|".join(str(value) for value in (source, source_id, key, source_value))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -168,6 +261,9 @@ def process_rows(
             if source_value not in mapping:
                 unmapped.append(
                     {
+                        "exception_id": unmapped_exception_id(
+                            config["source"], staged["_source_id"], key, source_value
+                        ),
                         "source_id": staged["_source_id"],
                         "attribute": attribute,
                         "source_value": source_value,
@@ -202,8 +298,9 @@ def _target_table(catalog: str, entity: dict[str, Any]) -> str:
 def _sync_config(spark: Any, catalog: str, config: dict[str, Any], raw_yaml: str) -> None:
     from pyspark.sql import functions as F
 
+    validate_identifier(catalog)
     table = f"{catalog}.cfihos_onramp.source_config"
-    source = config["source"]
+    source = validate_identifier(config["source"])
     spark.sql(f"DELETE FROM {table} WHERE source = '{source}'")
     frame = spark.createDataFrame(
         [(source, raw_yaml, hashlib.sha256(raw_yaml.encode()).hexdigest())],
@@ -212,19 +309,30 @@ def _sync_config(spark: Any, catalog: str, config: dict[str, Any], raw_yaml: str
     frame.write.mode("append").saveAsTable(table)
 
 
-def run_spark(spark: Any, catalog: str, config: dict[str, Any], model: dict[str, Any]) -> str:
-    """Run the generic engine with distributed Spark transformations."""
+def run_spark(
+    spark: Any,
+    catalog: str,
+    config: dict[str, Any],
+    model: dict[str, Any],
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    """Run one transformation path, guarding only its state-changing sinks."""
+    validate_identifier(catalog)
     from pyspark.sql import functions as F
 
     try:
+        from src.trust.materialize import materialize_entities
         from src.trust.who_wins import publish_claims
     except ModuleNotFoundError:  # Serverless Python-file tasks put src/ on sys.path.
         sys.path.insert(0, str(_SCRIPT_PATH.parents[1]))
+        from trust.materialize import materialize_entities
         from trust.who_wins import publish_claims
 
     run_id = str(uuid.uuid4())
-    source = config["source"]
+    source = validate_identifier(config["source"])
     prefixes = config.get("normalization", {}).get("strip_prefixes", [])
+    founding = config.get("origination", "steward_only") == "founding"
+    entity_reports: dict[str, dict[str, Any]] = {}
     for entity_name, feed in config["feeds"].items():
         entity = model["entities"][entity_name]
         source_frame = spark.table(feed["from"])
@@ -234,17 +342,26 @@ def run_spark(spark: Any, catalog: str, config: dict[str, Any], model: dict[str,
             for canonical, source_column in feed["fields"].items()
         )
         staged = source_frame.select(*projections)
+        input_rows = staged.count()
         blocked = None
+        unknown_frames = []
         for key, mapping in config.get("value_maps", {}).items():
             mapped_entity, attribute = key.split(".", 1)
             if mapped_entity != entity_name:
                 continue
             source_value = F.col(attribute).cast("string")
-            allowed = list(mapping)
+            allowed = [str(value) for value in mapping]
             unknown = staged.filter(source_value.isNotNull() & ~source_value.isin(allowed)).select(
-                F.sha2(F.concat_ws("|", F.lit(source), F.col("_source_id"), F.lit(key)), 256).alias(
-                    "exception_id"
-                ),
+                F.sha2(
+                    F.concat_ws(
+                        "|",
+                        F.lit(source),
+                        F.col("_source_id"),
+                        F.lit(key),
+                        source_value,
+                    ),
+                    256,
+                ).alias("exception_id"),
                 F.lit(run_id).alias("run_id"),
                 F.lit(source).alias("source"),
                 F.col("_source_id").alias("source_id"),
@@ -253,13 +370,38 @@ def run_spark(spark: Any, catalog: str, config: dict[str, Any], model: dict[str,
                 source_value.alias("source_value"),
                 F.current_timestamp().alias("recorded_at"),
             )
-            unknown.write.mode("append").saveAsTable(f"{catalog}.cfihos_onramp.unmapped_codes")
+            unknown_frames.append(unknown)
             ids = unknown.select("source_id").distinct()
             blocked = ids if blocked is None else blocked.unionByName(ids).distinct()
             entries = []
             for old, new in mapping.items():
                 entries.extend((F.lit(str(old)), F.lit(str(new))))
             staged = staged.withColumn(attribute, F.create_map(*entries)[source_value])
+        unmapped_summary: list[dict[str, Any]] = []
+        if unknown_frames:
+            unknown_candidates = reduce(
+                lambda left, right: left.unionByName(right), unknown_frames
+            )
+            existing_exceptions = spark.table(
+                f"{catalog}.cfihos_onramp.unmapped_codes"
+            ).select("exception_id")
+            unknown_to_write = unknown_candidates.join(
+                existing_exceptions, "exception_id", "left_anti"
+            )
+            if not dry_run:
+                unknown_to_write.write.mode("append").saveAsTable(
+                    f"{catalog}.cfihos_onramp.unmapped_codes"
+                )
+            summary_rows = (
+                unknown_candidates.groupBy(
+                    F.concat_ws(".", "entity", "attribute").alias("key"), "source_value"
+                )
+                .agg(F.count(F.lit(1)).alias("rows"))
+                .orderBy(F.desc("rows"), "key", "source_value")
+                .limit(50)
+                .collect()
+            )
+            unmapped_summary = [row.asDict(recursive=True) for row in summary_rows]
         eligible = staged if blocked is None else staged.join(
             blocked, staged._source_id == blocked.source_id, "left_anti"
         )
@@ -308,14 +450,36 @@ def run_spark(spark: Any, catalog: str, config: dict[str, Any], model: dict[str,
         normalized = no_exact.join(
             normalized_counts.filter(F.col("candidate_count") == 1), "_source_id", "inner"
         ).withColumn("match_tier", F.lit("normalized"))
-        resolved = direct.unionByName(exact, allowMissingColumns=True).unionByName(
+        matched = direct.unionByName(exact, allowMissingColumns=True).unionByName(
             normalized, allowMissingColumns=True
         )
-        unresolved = eligible.join(resolved.select("_source_id"), "_source_id", "left_anti")
+        unresolved = eligible.join(matched.select("_source_id"), "_source_id", "left_anti")
+        if founding:
+            founding_matches = unresolved.withColumn(
+                "spine_id",
+                F.concat(
+                    F.lit("sp-"),
+                    F.substring(
+                        F.sha2(
+                            F.concat(
+                                F.lit(f"spine|{entity_name}|{source}|"), F.col("_source_id")
+                            ),
+                            256,
+                        ),
+                        1,
+                        24,
+                    ),
+                ),
+            ).withColumn("match_tier", F.lit("founding"))
+            queue_input = unresolved.filter(F.lit(False))
+        else:
+            founding_matches = matched.filter(F.lit(False))
+            queue_input = unresolved
+        resolved = matched.unionByName(founding_matches, allowMissingColumns=True)
         queue_id = F.sha2(
             F.concat_ws("|", F.lit(source), F.lit(entity_name), F.col("_source_id")), 256
         )
-        queue = unresolved.select(
+        queue = queue_input.select(
             queue_id.alias("queue_id"),
             F.lit(run_id).alias("run_id"),
             F.lit(source).alias("source_system"),
@@ -329,9 +493,37 @@ def run_spark(spark: Any, catalog: str, config: dict[str, Any], model: dict[str,
             F.lit(None).cast("timestamp").alias("resolved_at"),
             F.current_timestamp().alias("created_at"),
         )
-        queue.write.mode("append").saveAsTable(f"{catalog}.cfihos_trust.review_queue")
+        existing_queue = spark.table(f"{catalog}.cfihos_trust.review_queue").select("queue_id")
+        queue_to_write = queue.join(existing_queue, "queue_id", "left_anti")
+        blocked_rows = 0 if blocked is None else blocked.count()
+        already_mapped = direct.count()
+        exact_rows = exact.count()
+        normalized_rows = normalized.count()
+        founding_rows = founding_matches.count()
+        queued_rows = queue_to_write.count()
+        covered = already_mapped + exact_rows + normalized_rows + founding_rows
+        entity_reports[entity_name] = {
+            "input_rows": input_rows,
+            "blocked_rows": blocked_rows,
+            "unmapped_codes": unmapped_summary,
+            "already_mapped": already_mapped,
+            "exact": exact_rows,
+            "normalized": normalized_rows,
+            "would_found": founding_rows,
+            "queued": queued_rows,
+            "coverage": covered / input_rows if input_rows else 0.0,
+        }
+        if not dry_run:
+            # Confirmed items become direct next run; rejection is a decision, not a snooze.
+            queue_to_write.write.mode("append").saveAsTable(
+                f"{catalog}.cfihos_trust.review_queue"
+            )
 
-        new_maps = resolved.filter(F.col("match_tier").isin("exact", "normalized")).select(
+        # Direct rows already exist in the crosswalk and must never flow back into new maps.
+        new_matches = exact.unionByName(normalized, allowMissingColumns=True).unionByName(
+            founding_matches, allowMissingColumns=True
+        )
+        new_maps = new_matches.select(
             F.lit(source).alias("source_system"),
             F.lit(entity_name).alias("entity"),
             F.col("_source_id").alias("source_id"),
@@ -340,7 +532,8 @@ def run_spark(spark: Any, catalog: str, config: dict[str, Any], model: dict[str,
             F.current_timestamp().alias("matched_at"),
             F.lit("onramp_engine").alias("matched_by"),
         )
-        new_maps.write.mode("append").saveAsTable(f"{catalog}.cfihos_trust.id_map")
+        if not dry_run:
+            new_maps.write.mode("append").saveAsTable(f"{catalog}.cfihos_trust.id_map")
 
         for key, claim in config["claims"].items():
             claim_entity, attribute = key.split(".", 1)
@@ -356,11 +549,22 @@ def run_spark(spark: Any, catalog: str, config: dict[str, Any], model: dict[str,
                 F.lit(claim["wins_rank"]).alias("wins_rank"),
                 F.current_timestamp().alias("observed_at"),
             )
-            values.write.mode("append").saveAsTable(
-                f"{catalog}.cfihos_onramp.staged_claims"
-            )
-    publish_claims(spark, catalog, run_id)
-    return run_id
+            if not dry_run:
+                # Claims intentionally remain append-per-run; retention is a future concern.
+                # Publication is scoped to run_id, so retained history does not republish itself.
+                values.write.mode("append").saveAsTable(
+                    f"{catalog}.cfihos_onramp.staged_claims"
+                )
+
+    if not dry_run:
+        publish_claims(spark, catalog, run_id)
+        materialize_entities(spark, catalog, model, config["feeds"])
+    return {
+        "mode": "dry_run" if dry_run else "live",
+        "source": source,
+        "run_id": run_id,
+        "entities": entity_reports,
+    }
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -370,7 +574,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--model", type=Path, default=_SCRIPT_PATH.parents[2] / "model" / "model.yml"
     )
-    args = parser.parse_args(argv)
+    parser.add_argument("--dry-run", action="store_true")
+    raw_arguments = list(sys.argv[1:] if argv is None else argv)
+    normalized_arguments: list[str] = []
+    for argument in raw_arguments:
+        if argument == "--dry-run=true":
+            normalized_arguments.append("--dry-run")
+        elif argument != "--dry-run=false":
+            normalized_arguments.append(argument)
+    args = parser.parse_args(normalized_arguments)
+    validate_identifier(args.catalog)
     root = _SCRIPT_PATH.parents[2]
     config_path = args.config
     if not config_path.exists():
@@ -387,9 +600,10 @@ def main(argv: list[str] | None = None) -> int:
     from pyspark.sql import SparkSession
 
     spark = SparkSession.builder.getOrCreate()
-    _sync_config(spark, args.catalog, config, raw_config)
-    run_id = run_spark(spark, args.catalog, config, model)
-    print(json.dumps({"source": config["source"], "run_id": run_id}))
+    if not args.dry_run:
+        _sync_config(spark, args.catalog, config, raw_config)
+    report = run_spark(spark, args.catalog, config, model, dry_run=args.dry_run)
+    print(json.dumps(report, indent=2, default=str))
     return 0
 
 

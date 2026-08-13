@@ -1,0 +1,4 @@
+location_id,plant_code,functional_location_code,description,process_unit_code,tag_class_name,status,designed_by_company_name,production_critical_item_indicator,safety_critical_item_indicator
+loc-001,PLANT-A,LOC-P-100,Primary pump,UNIT-01,pump,OPERATING,design_org_a,true,true
+loc-002,PLANT-A,LOC-P-200,Secondary pump,UNIT-01,pump,OUT_OF_SERVICE,design_org_a,false,true
+loc-003,PLANT-A,LOC-P-300,Standby pump,UNIT-02,valve,UNKNOWN,design_org_b,true,false

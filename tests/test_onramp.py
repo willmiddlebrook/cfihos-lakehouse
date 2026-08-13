@@ -1,8 +1,14 @@
+from copy import deepcopy
 from pathlib import Path
 
 import yaml
 
-from src.onramp.engine import match_record, process_rows, validate_config
+from src.onramp.engine import (
+    match_record,
+    process_rows,
+    unmapped_exception_id,
+    validate_config,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -54,3 +60,69 @@ def test_unmapped_code_is_logged_and_blocked_from_matching() -> None:
     assert len(result["unmapped"]) == 1
     assert result["matched"] == []
     assert result["review"] == []
+
+
+def test_changed_unmapped_value_gets_distinct_exception_identity() -> None:
+    first = unmapped_exception_id("source_a", "record-1", "tag.tag_status", "UNKNOWN")
+    second = unmapped_exception_id("source_a", "record-1", "tag.tag_status", "OTHER")
+    assert first != second
+
+
+def test_founding_source_must_claim_every_required_attribute() -> None:
+    config, model = load_inputs()
+    incomplete = deepcopy(config)
+    del incomplete["claims"]["equipment.equipment_class_name"]
+    errors = validate_config(incomplete, model)
+    assert any(
+        "founding feed equipment: missing required claims "
+        "equipment.equipment_class_name" in error
+        for error in errors
+    )
+
+
+def test_claim_field_must_mirror_the_feed_mapping() -> None:
+    config, model = load_inputs()
+    invalid = deepcopy(config)
+    invalid["claims"]["equipment.equipment_code"]["field"] = "wrong_column"
+    errors = validate_config(invalid, model)
+    assert any(
+        "claim equipment.equipment_code: field must equal feed mapping 'asset_code'" in error
+        for error in errors
+    )
+
+
+def test_feed_must_target_a_generated_registry_entity() -> None:
+    _, model = load_inputs()
+    generated = set(model["generation"]["spine_entities"])
+    entity_name = next(name for name in model["entities"] if name not in generated)
+    entity = model["entities"][entity_name]
+    identifier = next(
+        item["name"] for item in entity["attributes"] if item["requirement"] == "identifier"
+    )
+    config = {
+        "source": "out_of_scope_fixture",
+        "arrives_as": "table",
+        "origination": "steward_only",
+        "feeds": {
+            entity_name: {
+                "from": "fixture_catalog.bronze.out_of_scope_fixture",
+                "source_id": "record_id",
+                "match_on": [identifier],
+                "fields": {identifier: "source_identifier"},
+            }
+        },
+        "claims": {
+            f"{entity_name}.{identifier}": {
+                "field": "source_identifier",
+                "wins_rank": 10,
+            }
+        },
+        "value_maps": {},
+        "unmatched": "review_queue",
+    }
+    errors = validate_config(config, model)
+    assert any(
+        f"feed {entity_name}: entity is not selected in "
+        "model.generation.spine_entities" in error
+        for error in errors
+    )

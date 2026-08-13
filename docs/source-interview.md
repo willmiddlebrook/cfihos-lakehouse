@@ -1,4 +1,9 @@
+> Origin: This interview procedure is original to this kit and licensed under MIT.
+
 # Five-question source interview
+
+For plain definitions of a source mapping, founding source, and review queue, read
+[how the system works](HOW-IT-WORKS.md) first.
 
 Record the answers with the source owner. They map directly to one file under
 `src/onramp/sources/`; do not add source-specific code.

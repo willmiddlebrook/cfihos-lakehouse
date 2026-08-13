@@ -19,4 +19,6 @@ jobs:
       - run: ruff check .
       - run: python tests/check_contracts.py
       - name: Generated files are current
-        run: git diff --exit-code -- model/model.yml model/parse_exceptions.yml src/ddl
+        run: >-
+          git diff --exit-code -- model/model.yml model/parse_exceptions.yml
+          model/generation_report.yml src/ddl

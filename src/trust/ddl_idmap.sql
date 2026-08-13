@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS ${catalog}.cfihos_trust.id_map (
   entity STRING NOT NULL COMMENT 'CFIHOS-aligned entity name',
   source_id STRING NOT NULL COMMENT 'Identifier assigned by the source system',
   spine_id STRING NOT NULL COMMENT 'Golden identifier in the consolidation hub',
-  match_tier STRING NOT NULL COMMENT 'exact, normalized, or steward',
+  match_tier STRING NOT NULL COMMENT 'exact, normalized, steward, or founding',
   matched_at TIMESTAMP NOT NULL COMMENT 'Time the same-thing decision was recorded',
   matched_by STRING NOT NULL COMMENT 'Engine or steward that recorded the decision',
   CONSTRAINT pk_id_map PRIMARY KEY (source_system, entity, source_id) NOT ENFORCED
@@ -111,6 +111,15 @@ CREATE TABLE IF NOT EXISTS ${catalog}.cfihos_trust.published_attributes (
 ) USING DELTA
 COMMENT 'Generic SCD2 publication of winning canonical attribute values';
 
+CREATE TABLE IF NOT EXISTS ${catalog}.cfihos_trust.pending_records (
+  spine_id STRING NOT NULL,
+  entity STRING NOT NULL,
+  missing_attributes ARRAY<STRING> NOT NULL COMMENT 'Attributes implicated by the pending reason',
+  reason STRING NOT NULL COMMENT 'missing or invalid_value',
+  recorded_at TIMESTAMP NOT NULL
+) USING DELTA
+COMMENT 'Current unresolved spine records withheld from canonical tables when required values are missing or typed values are invalid';
+
 CREATE TABLE IF NOT EXISTS ${catalog}.cfihos_trust.validation_results (
   validation_run_id STRING NOT NULL,
   check_name STRING NOT NULL,
@@ -130,6 +139,14 @@ CREATE TABLE IF NOT EXISTS ${catalog}.cfihos_onramp.source_config (
   CONSTRAINT pk_source_config PRIMARY KEY (source) NOT ENFORCED
 ) USING DELTA
 COMMENT 'Queryable Delta twin of every checked-in source configuration';
+
+CREATE TABLE IF NOT EXISTS ${catalog}.cfihos_onramp.source_profiles (
+  source STRING NOT NULL,
+  table_name STRING NOT NULL,
+  profile_yaml STRING NOT NULL,
+  profiled_at TIMESTAMP NOT NULL
+) USING DELTA
+COMMENT 'Source profiles retained for mapping proposals; YAML can contain raw sample values';
 
 CREATE TABLE IF NOT EXISTS ${catalog}.cfihos_onramp.unmapped_codes (
   exception_id STRING NOT NULL,

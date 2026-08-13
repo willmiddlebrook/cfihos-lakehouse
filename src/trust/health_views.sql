@@ -49,6 +49,16 @@ SELECT entity, attribute, conflict_type, count(*) AS open_conflicts
 FROM ${catalog}.cfihos_trust.attribute_conflicts
 GROUP BY entity, attribute, conflict_type;
 
+CREATE OR REPLACE VIEW ${catalog}.cfihos_trust.pending_health AS
+SELECT
+  entity,
+  reason,
+  missing_attributes,
+  count(*) AS pending_records,
+  max(recorded_at) AS latest_recorded_at
+FROM ${catalog}.cfihos_trust.pending_records
+GROUP BY entity, reason, missing_attributes;
+
 CREATE OR REPLACE VIEW ${catalog}.cfihos_trust.load_exception_health AS
 SELECT
   '__rdl__' AS source,

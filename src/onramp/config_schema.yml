@@ -2,22 +2,38 @@ version: 1
 description: Configuration contract for every source; source-specific code is prohibited.
 required:
   source: sql_identifier
-  arrives_as: [table, files]
+  arrives_as: table
   feeds: mapping
+  # Claims are the values a source asserts; wins_rank says which source wins a disagreement.
   claims: mapping
+  # Value maps translate source codes into the standard's codes; no implicit translation occurs.
   value_maps: mapping
+  # Unmatched records go to the human "not sure" pile rather than being guessed.
   unmatched: review_queue
+optional:
+  # Origination says whether this is the one founding (first-census) source allowed to create assets.
+  origination:
+    values: [founding, steward_only]
+    default: steward_only
 feed:
+  # A feed targets one of the registry tables selected by model.generation.spine_entities.
   required:
-    from: three_part_table_or_volume_path
+    from: three_part_table
     source_id: source_column
+    # match_on lists the standard fields used to decide whether two records are the same asset.
     match_on: list_of_canonical_attributes
     fields: canonical_attribute_to_source_column_mapping
 claim:
   key: entity.attribute
   required:
+    # field repeats the source column from fields so reviewers can verify the claim directly.
     field: source_column
     wins_rank: positive_integer
+value_map:
+  key: entity.attribute
+  target_gate:
+    verified: target_present_in_referenced_core_rdl_identifier_column
+    unverifiable: acknowledged_with_basis_in_mapping_proposal
 normalization:
   defaults: [trim, collapse_whitespace, casefold]
   optional:

@@ -2,9 +2,17 @@ CFIHOS Lakehouse Kit
 
 The implementation code is Copyright (c) 2026 William Middlebrook.
 
-This repository includes CFIHOS v2.0 materials published by IOGP JIP36. The
-CFIHOS data-model documents are licensed under Creative Commons Attribution 4.0
-International (CC BY 4.0). Source: https://www.jip36-cfihos.org/cfihos-standards/
+This repository redistributes two CFIHOS v2.0 inputs published by IOGP JIP36:
+
+- the CORE CFIHOS CSV archive, unpacked under spec/rdl/; and
+- the C-DM-002 Data Dictionary workbook under spec/.
+
+The license terms accompanying the CFIHOS data-model download make these
+materials available under Creative Commons Attribution 4.0 International
+(CC BY 4.0). Preserve IOGP JIP36 attribution when copying or adapting them.
+Source: https://www.jip36-cfihos.org/cfihos-standards/
+
+See spec/VERSIONS.md for exact artifact hashes and acquisition dates.
 
 The generated and deployable model is CFIHOS v2.0-aligned. It is not CFIHOS
 certified and is not part of the formal conformance program.

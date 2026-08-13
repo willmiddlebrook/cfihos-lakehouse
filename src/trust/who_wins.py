@@ -15,8 +15,31 @@ class Resolution:
     conflicts: tuple[dict[str, Any], ...]
 
 
-def resolve_claims(claims: Iterable[dict[str, Any]]) -> Resolution:
+def resolve_claims(
+    claims: Iterable[dict[str, Any]],
+    *,
+    current_winner: dict[str, Any] | None = None,
+) -> Resolution:
+    """Resolve incoming claims against the still-current published winner.
+
+    A new observation supersedes the same source's prior observation. A winner
+    from another source remains a candidate, so processing sources in separate
+    runs cannot make arrival order override the configured precedence.
+    """
     values = list(claims)
+    if current_winner is not None:
+        current = {
+            **current_winner,
+            "source_system": current_winner.get(
+                "source_system", current_winner.get("winning_source")
+            ),
+        }
+        if current["source_system"] is None:
+            raise KeyError("current_winner requires winning_source or source_system")
+        if not any(
+            item["source_system"] == current["source_system"] for item in values
+        ):
+            values.append(current)
     if not values:
         return Resolution(None, ())
     best_rank = min(int(item["wins_rank"]) for item in values)
@@ -54,11 +77,48 @@ def publish_claims(spark: Any, catalog: str, run_id: str) -> None:
     from pyspark.sql import Window
     from pyspark.sql import functions as F
 
-    claims = spark.table(f"{catalog}.cfihos_onramp.staged_claims").filter(
-        F.col("run_id") == run_id
+    claim_columns = [
+        "run_id",
+        "source_system",
+        "entity",
+        "spine_id",
+        "attribute",
+        "value",
+        "wins_rank",
+    ]
+    keys = ["entity", "spine_id", "attribute"]
+    claims = (
+        spark.table(f"{catalog}.cfihos_onramp.staged_claims")
+        .filter(F.col("run_id") == run_id)
+        .select(*claim_columns)
     )
+
+    # One engine run normally contains one source. Bring the published winner
+    # for every touched attribute into this run's candidate set so arrival order
+    # cannot override precedence. An incoming observation replaces that same
+    # source's old observation instead of tying with its own history.
+    current_published = spark.table(
+        f"{catalog}.cfihos_trust.published_attributes"
+    ).filter(F.col("is_current"))
+    touched_attributes = claims.select(*keys).distinct()
+    incoming_sources = claims.select(*keys, "source_system").distinct()
+    current_candidates = (
+        current_published.join(touched_attributes, keys, "inner")
+        .select(
+            F.lit(run_id).alias("run_id"),
+            F.col("winning_source").alias("source_system"),
+            *keys,
+            "value",
+            "wins_rank",
+        )
+        .join(incoming_sources, [*keys, "source_system"], "left_anti")
+    )
+    candidates = claims.unionByName(current_candidates)
+
     group = Window.partitionBy("entity", "spine_id", "attribute")
-    ranked = claims.withColumn("best_rank", F.min("wins_rank").over(group)).withColumn(
+    ranked = candidates.withColumn(
+        "best_rank", F.min("wins_rank").over(group)
+    ).withColumn(
         "leader_count",
         F.sum(F.when(F.col("wins_rank") == F.col("best_rank"), 1).otherwise(0)).over(group),
     )
@@ -82,7 +142,10 @@ def publish_claims(spark: Any, catalog: str, run_id: str) -> None:
         ),
         ["entity", "spine_id", "attribute"],
         "left",
-    ).filter((F.col("leader_count") > 1) | (F.col("value") != F.col("winning_value")))
+    ).filter(
+        (F.col("leader_count") > 1)
+        | ~F.col("value").eqNullSafe(F.col("winning_value"))
+    )
     conflicts = conflict_rows.select(
         F.sha2(
             F.concat_ws(
@@ -114,17 +177,25 @@ def publish_claims(spark: Any, catalog: str, run_id: str) -> None:
           AND target.spine_id = source.spine_id
           AND target.attribute = source.attribute
           AND target.is_current = true
-        WHEN MATCHED AND NOT target.value <=> source.value THEN UPDATE SET
+        WHEN MATCHED AND (
+          NOT (target.value <=> source.value)
+          OR target.winning_source <> source.winning_source
+          OR target.wins_rank <> source.wins_rank
+        ) THEN UPDATE SET
           target.valid_to = current_timestamp(), target.is_current = false"""
     )
     current = spark.table(f"{catalog}.cfihos_trust.published_attributes").filter(
         F.col("is_current")
     )
-    additions = winners.join(
-        current,
-        ["entity", "spine_id", "attribute", "value"],
-        "left_anti",
-    ).select(
+    same_current_winner = (
+        (winners.entity == current.entity)
+        & (winners.spine_id == current.spine_id)
+        & (winners.attribute == current.attribute)
+        & winners.value.eqNullSafe(current.value)
+        & (winners.winning_source == current.winning_source)
+        & (winners.wins_rank == current.wins_rank)
+    )
+    additions = winners.join(current, same_current_winner, "left_anti").select(
         winners["entity"],
         winners["spine_id"],
         winners["attribute"],

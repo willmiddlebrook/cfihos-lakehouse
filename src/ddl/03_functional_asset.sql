@@ -1,6 +1,6 @@
 -- CFIHOS materials are published by IOGP JIP36 under CC BY 4.0.
 -- This generated output is CFIHOS v2.0-aligned; it is not CFIHOS certified.
--- PK/FK constraints below are informational. The validation job performs enforcement.
+-- PK/FK constraints are informational. The validation job performs enforcement.
 
 CREATE SCHEMA IF NOT EXISTS ${catalog}.`cfihos_functional_asset` COMMENT 'CFIHOS v2.0-aligned functional asset subject area.' ;
 
@@ -34,8 +34,7 @@ CREATE TABLE IF NOT EXISTS ${catalog}.`cfihos_functional_asset`.`process_unit` (
   `valid_to` TIMESTAMP COMMENT '[Implementation] End of validity for this published version; null means current.',
   `is_current` BOOLEAN NOT NULL COMMENT '[Implementation] Whether this is the current published version.',
   `recorded_at` TIMESTAMP NOT NULL COMMENT '[Implementation] Time this version was recorded by the consolidation hub.',
-  CONSTRAINT `pk_process_unit` PRIMARY KEY (`plant_code`, `process_unit_code`) NOT ENFORCED,
-  CONSTRAINT `fk_process_unit_plant_code` FOREIGN KEY (`plant_code`) REFERENCES ${catalog}.`cfihos_functional_asset`.`plant` (`plant_code`) NOT ENFORCED
+  CONSTRAINT `pk_process_unit` PRIMARY KEY (`plant_code`, `process_unit_code`) NOT ENFORCED
 )
 COMMENT 'A decomposition of the ''''high level'''' Facility function into more granular ''''sub-functions'''' CFIHOS v2.0-aligned. Declared constraints are informational; validation jobs perform enforcement.'
 TBLPROPERTIES (
@@ -71,8 +70,7 @@ CREATE TABLE IF NOT EXISTS ${catalog}.`cfihos_functional_asset`.`tag` (
   `valid_to` TIMESTAMP COMMENT '[Implementation] End of validity for this published version; null means current.',
   `is_current` BOOLEAN NOT NULL COMMENT '[Implementation] Whether this is the current published version.',
   `recorded_at` TIMESTAMP NOT NULL COMMENT '[Implementation] Time this version was recorded by the consolidation hub.',
-  CONSTRAINT `pk_tag` PRIMARY KEY (`plant_code`, `tag_name`) NOT ENFORCED,
-  CONSTRAINT `fk_tag_tag_class_name` FOREIGN KEY (`tag_class_name`) REFERENCES ${catalog}.`cfihos_classification`.`tag_class` (`tag_class_name`) NOT ENFORCED
+  CONSTRAINT `pk_tag` PRIMARY KEY (`plant_code`, `tag_name`) NOT ENFORCED
 )
 COMMENT 'An object designed for performing functional requirements and serving as a specification for equipment CFIHOS v2.0-aligned. Declared constraints are informational; validation jobs perform enforcement.'
 TBLPROPERTIES (

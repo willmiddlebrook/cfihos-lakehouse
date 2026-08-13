@@ -5,10 +5,27 @@ from unittest.mock import MagicMock
 
 import yaml
 
-from src.deploy_foundation import ensure_catalog, split_sql_statements
+from src.deploy_foundation import added_constraint_name, ensure_catalog, split_sql_statements
+from src.identifiers import validate_identifier, validate_version
 from src.onramp.engine import validate_config
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_shared_sql_identifier_and_version_guards() -> None:
+    assert validate_identifier("cfihos_tutorial") == "cfihos_tutorial"
+    assert validate_version("2.0.1") == "2.0.1"
+    for validator, value in (
+        (validate_identifier, "bad-name"),
+        (validate_identifier, "UPPER"),
+        (validate_version, "2.x"),
+    ):
+        try:
+            validator(value)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"unsafe value was accepted: {value}")
 
 
 def test_engine_config_producer_consumer_contracts() -> None:
@@ -20,12 +37,31 @@ def test_engine_config_producer_consumer_contracts() -> None:
     )
 
 
+def test_exactly_one_committed_source_is_founding() -> None:
+    configs = [
+        yaml.safe_load(path.read_text(encoding="utf-8"))
+        for path in (ROOT / "src" / "onramp" / "sources").glob("*.yml")
+    ]
+    founding_sources = [
+        config["source"] for config in configs if config.get("origination") == "founding"
+    ]
+    assert len(founding_sources) == 1
+
+
 def test_sql_splitter_preserves_semicolons_and_escaped_quotes_in_comments() -> None:
     sql = "CREATE TABLE t (c STRING COMMENT 'owner''s; value'); -- one; two\nSELECT 1;"
     statements = split_sql_statements(sql)
     assert len(statements) == 2
     assert "owner''s; value" in statements[0]
     assert statements[1].endswith("SELECT 1")
+
+
+def test_deferred_constraint_name_is_detected_for_idempotent_deploys() -> None:
+    statement = (
+        "ALTER TABLE c.`cfihos_functional_asset`.`process_unit` "
+        "ADD CONSTRAINT `fk_process_unit_plant_code` FOREIGN KEY (`plant_code`)"
+    )
+    assert added_constraint_name(statement) == "fk_process_unit_plant_code"
 
 
 def test_foundation_does_not_recreate_an_existing_governed_catalog() -> None:

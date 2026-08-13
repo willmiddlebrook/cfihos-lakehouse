@@ -1,0 +1,139 @@
+proposal_version: 1
+source: example_cmms
+generated_by: codex/gpt-5
+generated_at: '2026-08-13T17:00:00Z'
+pins:
+  model_sha256: 65262c62aec49e3a70225d8add4d9658d98a1dd5e18082c6155e94f3ec0db5a1
+  rdl_version: '2.0'
+  profile_file: src/onramp/profiles/example_cmms.yml
+  profile_sha256: ea3e546e7b11fdd2109d3d75ba1cb8a7ecd76584c3ce65e8658ebe6b82b7a4b4
+mappings:
+  - entity: tag
+    attribute: plant_code
+    source_column: plant_code
+    tier: certain
+    evidence:
+      - kind: name_similarity
+        note: The source and canonical columns have the same name.
+      - kind: sample_fit
+        note: Profile values fit the documented plant-code text shape.
+  - entity: tag
+    attribute: tag_name
+    source_column: functional_location_code
+    tier: certain
+    evidence:
+      - kind: definition_match
+        note: The source column identifies the functional location represented by a tag.
+      - kind: sample_fit
+        note: Profile values fit the documented tag-name text shape.
+  - entity: tag
+    attribute: tag_description
+    source_column: description
+    tier: certain
+    evidence:
+      - kind: name_similarity
+        note: Both columns explicitly describe a description value.
+      - kind: definition_match
+        note: The profile content describes the function performed by each tag.
+  - entity: tag
+    attribute: process_unit_code
+    source_column: process_unit_code
+    tier: certain
+    evidence:
+      - kind: name_similarity
+        note: The source and canonical columns have the same name.
+      - kind: definition_match
+        note: The source code identifies the process unit that contains the tag.
+  - entity: tag
+    attribute: tag_class_name
+    source_column: tag_class_name
+    tier: certain
+    evidence:
+      - kind: name_similarity
+        note: The source and canonical columns have the same name.
+      - kind: definition_match
+        note: The source values classify the function delivered by each tag.
+  - entity: tag
+    attribute: tag_status
+    source_column: status
+    tier: certain
+    evidence:
+      - kind: definition_match
+        note: Both fields represent the current engineering status of the tag.
+      - kind: picklist_coverage
+        note: Two observed values have explicit translations and one is abstained.
+  - entity: tag
+    attribute: designed_by_company_name
+    source_column: designed_by_company_name
+    tier: certain
+    evidence:
+      - kind: name_similarity
+        note: The source and canonical columns have the same name.
+      - kind: definition_match
+        note: The source value identifies the organization responsible for the tag design.
+  - entity: tag
+    attribute: production_critical_item_indicator
+    source_column: production_critical_item_indicator
+    tier: certain
+    evidence:
+      - kind: name_similarity
+        note: The source and canonical columns have the same name.
+      - kind: sample_fit
+        note: Profile values are booleans consistent with the canonical data type.
+  - entity: tag
+    attribute: safety_critical_item_indicator
+    source_column: safety_critical_item_indicator
+    tier: certain
+    evidence:
+      - kind: name_similarity
+        note: The source and canonical columns have the same name.
+      - kind: sample_fit
+        note: Profile values are booleans consistent with the canonical data type.
+  - entity: equipment
+    attribute: equipment_code
+    source_column: asset_code
+    tier: certain
+    evidence:
+      - kind: name_similarity
+        note: Both fields are source-assigned codes for a physical asset.
+      - kind: sample_fit
+        note: Profile values fit the documented equipment-code text shape.
+  - entity: equipment
+    attribute: equipment_manufacturer_serial_number
+    source_column: serial_number
+    tier: probable
+    evidence:
+      - kind: name_similarity
+        note: The source column is explicitly named as a serial number.
+  - entity: equipment
+    attribute: equipment_class_name
+    source_column: class_name
+    tier: probable
+    evidence:
+      - kind: definition_match
+        note: The source field classifies the physical composition of equipment.
+  - entity: equipment
+    attribute: equipment_actual_installation_date
+    source_column: installed_on
+    tier: certain
+    evidence:
+      - kind: name_similarity
+        note: Both fields explicitly identify an installation date.
+      - kind: sample_fit
+        note: Profile values are ISO dates consistent with the canonical data type.
+value_map_summaries:
+  - key: tag.tag_status
+    distinct_seen: 3
+    mapped: 2
+    abstained: 1
+match_on_rationale: Tag name and equipment serial number are the interview-approved same-thing keys.
+wins_rank_rationale: Rank 10 is the interview-approved authority for every listed tag and equipment claim.
+abstained:
+  columns: []
+  codes:
+    - key: tag.tag_status
+      source_value: UNKNOWN
+      reason: The source owner has not approved a canonical status translation.
+unverifiable_targets:
+  - key: tag.tag_status
+    basis: The engineering_status reference has no supplied Core RDL CSV and needs human review.

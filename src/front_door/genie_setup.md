@@ -1,4 +1,10 @@
+> Origin: This setup procedure is original to this kit and licensed under MIT.
+
 # Genie space setup
+
+Genie is the workspace's natural-language data question interface. Read
+[`docs/HOW-IT-WORKS.md`](../../docs/HOW-IT-WORKS.md) first for plain definitions of
+the registry, source matching, and health views.
 
 Use the GA Genie user interface. Do not use the Genie import/export API while that
 API remains Beta; the repository guardrail excludes Beta dependencies.
@@ -26,8 +32,9 @@ API remains Beta; the repository guardrail excludes Beta dependencies.
 - Use `cfihos_front_door.source_health` for onboarding and operational-health questions.
 - Use `cfihos_front_door.completeness_metrics` for completeness questions. This is the
   shared KPI definition; do not recalculate completeness from raw tables.
-- Exact and normalized matches are automatic. Steward matches are explicit human
-  decisions. Anything else remains in the review queue.
+- `founding` = created by the first-census source. Exact and normalized matches are
+  automatic for later sources. Steward matches are explicit human decisions. Anything
+  else remains in the review queue.
 - Treat unmapped codes, open conflicts, review records, and unexplained load exceptions as
   visible quality issues. Never silently exclude them from a health answer.
 - CFIHOS reference tables are dimensions. Join by the published CFIHOS code or class name

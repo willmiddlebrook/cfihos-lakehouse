@@ -60,6 +60,8 @@ resources:
       parameters:
         - name: source_config
           default: example_cmms.yml
+        - name: dry_run
+          default: "false"
       tasks:
         - task_key: run_onramp
           spark_python_task:
@@ -69,6 +71,33 @@ resources:
               - ${var.catalog}
               - --config
               - "{{job.parameters.source_config}}"
+              - "--dry-run={{job.parameters.dry_run}}"
+          environment_key: yaml
+      environments:
+        - environment_key: yaml
+          spec:
+            client: "1"
+            dependencies:
+              - PyYAML==6.0.2
+
+    profile_source:
+      name: ${bundle.target}-cfihos-profile-source
+      parameters:
+        - name: source
+          default: example_cmms
+        - name: table
+          default: ${var.catalog}.bronze.example_locations
+      tasks:
+        - task_key: profile_source
+          spark_python_task:
+            python_file: ../src/onramp/profile_source.py
+            parameters:
+              - --catalog
+              - ${var.catalog}
+              - --source
+              - "{{job.parameters.source}}"
+              - --table
+              - "{{job.parameters.table}}"
           environment_key: yaml
       environments:
         - environment_key: yaml

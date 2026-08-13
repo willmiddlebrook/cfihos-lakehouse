@@ -13,6 +13,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+try:
+    from src.identifiers import validate_identifier, validate_version
+except ModuleNotFoundError:  # Serverless Python-file tasks put src/ on sys.path.
+    from identifiers import validate_identifier, validate_version
+
 _SCRIPT_PATH = Path(globals().get("__file__", sys.argv[0])).resolve()
 
 
@@ -118,6 +123,8 @@ def parse_csv(path: Path) -> CsvBatch:
 
 def load_rdl(spark: Any, spec_dir: Path, catalog: str, rdl_version: str) -> None:
     """Replace one RDL version atomically per table while retaining other versions."""
+    validate_identifier(catalog)
+    validate_version(rdl_version)
     from pyspark.sql import functions as F
     from pyspark.sql.types import StringType, StructField, StructType
 
@@ -181,6 +188,11 @@ def load_rdl(spark: Any, spec_dir: Path, catalog: str, rdl_version: str) -> None
             frame.write.format("delta").mode("append").option(
                 "mergeSchema", "true"
             ).saveAsTable(table)
+            comment_file = path.name.replace("'", "''")
+            spark.sql(
+                f"COMMENT ON TABLE {table} IS "
+                f"'Core CFIHOS v{rdl_version} reference data loaded from {comment_file}'"
+            )
 
         if batch.exceptions:
             exception_rows = [

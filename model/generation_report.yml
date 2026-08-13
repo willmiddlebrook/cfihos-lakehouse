@@ -1,0 +1,271 @@
+report_version: 1
+model:
+  name: CFIHOS v2.0-aligned canonical model
+  cfihos_version: '2.0'
+  source: C-DM-002-Data-Dictionary-V2.0.xlsx
+  source_sha256: 65262c62aec49e3a70225d8add4d9658d98a1dd5e18082c6155e94f3ec0db5a1
+generated_entities:
+- plant
+- process_unit
+- tag
+- equipment
+- document_master
+- tag_or_equipment_class
+- tag_class
+- equipment_class
+- tag_class_equipment_class_relationship
+- property
+- tag_or_equipment_class_property
+- tag_class_property
+- equipment_class_property
+- tag_property
+- equipment_property
+foreign_keys:
+  summary:
+    considered: 57
+    emitted: 9
+    skipped: 48
+    skipped_by_reason:
+      target_out_of_scope: 34
+      composite_target_key: 11
+      renamed_key: 3
+      target_has_no_single_identifier: 0
+  emitted:
+  - constraint_name: fk_process_unit_plant_code
+    source_entity: process_unit
+    source_attribute: plant_code
+    target_entity: plant
+    target_attribute: plant_code
+  - constraint_name: fk_tag_tag_class_name
+    source_entity: tag
+    source_attribute: tag_class_name
+    target_entity: tag_class
+    target_attribute: tag_class_name
+  - constraint_name: fk_equipment_equipment_class_name
+    source_entity: equipment
+    source_attribute: equipment_class_name
+    target_entity: equipment_class
+    target_attribute: equipment_class_name
+  - constraint_name: fk_tag_class_equipment_class_relationship_tag_class_name
+    source_entity: tag_class_equipment_class_relationship
+    source_attribute: tag_class_name
+    target_entity: tag_class
+    target_attribute: tag_class_name
+  - constraint_name: fk_tag_class_equipment_class_relationship_equipment_class_name
+    source_entity: tag_class_equipment_class_relationship
+    source_attribute: equipment_class_name
+    target_entity: equipment_class
+    target_attribute: equipment_class_name
+  - constraint_name: fk_tag_or_equipment_class_property_property_name
+    source_entity: tag_or_equipment_class_property
+    source_attribute: property_name
+    target_entity: property
+    target_attribute: property_name
+  - constraint_name: fk_tag_property_property_name
+    source_entity: tag_property
+    source_attribute: property_name
+    target_entity: property
+    target_attribute: property_name
+  - constraint_name: fk_equipment_property_equipment_code
+    source_entity: equipment_property
+    source_attribute: equipment_code
+    target_entity: equipment
+    target_attribute: equipment_code
+  - constraint_name: fk_equipment_property_property_name
+    source_entity: equipment_property
+    source_attribute: property_name
+    target_entity: property
+    target_attribute: property_name
+  skipped:
+  - source_entity: plant
+    source_attribute: site_code
+    target_entity: site
+    reason: target_out_of_scope
+  - source_entity: plant
+    source_attribute: iso_language_code
+    target_entity: iso_language
+    reason: target_out_of_scope
+  - source_entity: plant
+    source_attribute: measurement_system_code
+    target_entity: measurement_system
+    reason: target_out_of_scope
+  - source_entity: plant
+    source_attribute: industrial_complex_code
+    target_entity: industrial_complex
+    reason: target_out_of_scope
+  - source_entity: tag
+    source_attribute: plant_code
+    target_entity: process_unit
+    reason: composite_target_key
+  - source_entity: tag
+    source_attribute: parent_tag_name
+    target_entity: tag
+    reason: composite_target_key
+  - source_entity: tag
+    source_attribute: process_unit_code
+    target_entity: process_unit
+    reason: composite_target_key
+  - source_entity: tag
+    source_attribute: area_code
+    target_entity: area
+    reason: target_out_of_scope
+  - source_entity: tag
+    source_attribute: construction_assembly_code
+    target_entity: construction_assembly
+    reason: target_out_of_scope
+  - source_entity: tag
+    source_attribute: commissioning_unit_code
+    target_entity: leaf_node_commissioning_unit
+    reason: target_out_of_scope
+  - source_entity: tag
+    source_attribute: maintenance_unit_code
+    target_entity: maintenance_system
+    reason: target_out_of_scope
+  - source_entity: tag
+    source_attribute: maintenance_system_code
+    target_entity: maintenance_system
+    reason: target_out_of_scope
+  - source_entity: tag
+    source_attribute: corrosion_loop_code
+    target_entity: corrosion_loop
+    reason: target_out_of_scope
+  - source_entity: tag
+    source_attribute: tag_status
+    target_entity: engineering_status
+    reason: target_out_of_scope
+  - source_entity: tag
+    source_attribute: designed_by_company_name
+    target_entity: company
+    reason: target_out_of_scope
+  - source_entity: tag
+    source_attribute: safety_critical_item_group_code
+    target_entity: safety_critical_item_group
+    reason: target_out_of_scope
+  - source_entity: tag
+    source_attribute: manufacturer_company_name
+    target_entity: model_part
+    reason: target_out_of_scope
+  - source_entity: tag
+    source_attribute: model_part_name
+    target_entity: model_part
+    reason: target_out_of_scope
+  - source_entity: equipment
+    source_attribute: plant_code
+    target_entity: tag
+    reason: composite_target_key
+  - source_entity: equipment
+    source_attribute: tag_name
+    target_entity: tag
+    reason: composite_target_key
+  - source_entity: equipment
+    source_attribute: manufacturer_company_name
+    target_entity: model_part
+    reason: target_out_of_scope
+  - source_entity: equipment
+    source_attribute: model_part_name
+    target_entity: model_part
+    reason: target_out_of_scope
+  - source_entity: equipment
+    source_attribute: vendor_company_name
+    target_entity: company
+    reason: target_out_of_scope
+  - source_entity: equipment
+    source_attribute: iso_currency_code
+    target_entity: iso_currency
+    reason: target_out_of_scope
+  - source_entity: equipment
+    source_attribute: purchase_order_issuer_company_name
+    target_entity: purchase_order_item
+    reason: target_out_of_scope
+  - source_entity: equipment
+    source_attribute: purchase_order_number
+    target_entity: purchase_order_item
+    reason: target_out_of_scope
+  - source_entity: equipment
+    source_attribute: purchase_order_item_number
+    target_entity: purchase_order_item
+    reason: target_out_of_scope
+  - source_entity: document_master
+    source_attribute: discipline_document_type_short_code
+    target_entity: discipline_document_type
+    reason: target_out_of_scope
+  - source_entity: document_master
+    source_attribute: document_review_type
+    target_entity: document_review_type
+    reason: target_out_of_scope
+  - source_entity: tag_or_equipment_class
+    source_attribute: parent_tag_or_equipment_class_name
+    target_entity: tag_or_equipment_class
+    reason: renamed_key
+  - source_entity: tag_class
+    source_attribute: tag_class_name
+    target_entity: tag_or_equipment_class
+    reason: renamed_key
+  - source_entity: equipment_class
+    source_attribute: equipment_class_name
+    target_entity: tag_or_equipment_class
+    reason: renamed_key
+  - source_entity: property
+    source_attribute: property_data_type
+    target_entity: data_type
+    reason: target_out_of_scope
+  - source_entity: property
+    source_attribute: unit_of_measure_dimension_code
+    target_entity: unit_of_measure_dimension
+    reason: target_out_of_scope
+  - source_entity: property
+    source_attribute: property_picklist_name
+    target_entity: property_picklist
+    reason: target_out_of_scope
+  - source_entity: tag_or_equipment_class_property
+    source_attribute: tag_or_equipment_class_name
+    target_entity: non_abstract_tag_or_equipment_class
+    reason: target_out_of_scope
+  - source_entity: tag_or_equipment_class_property
+    source_attribute: imperial_unit_of_measure_name
+    target_entity: unit_of_measure
+    reason: target_out_of_scope
+  - source_entity: tag_or_equipment_class_property
+    source_attribute: si_unit_of_measure_name
+    target_entity: unit_of_measure
+    reason: target_out_of_scope
+  - source_entity: tag_class_property
+    source_attribute: tag_class_name
+    target_entity: tag_or_equipment_class_property
+    reason: composite_target_key
+  - source_entity: tag_class_property
+    source_attribute: property_name
+    target_entity: tag_or_equipment_class_property
+    reason: composite_target_key
+  - source_entity: equipment_class_property
+    source_attribute: equipment_class_name
+    target_entity: tag_or_equipment_class_property
+    reason: composite_target_key
+  - source_entity: equipment_class_property
+    source_attribute: property_name
+    target_entity: tag_or_equipment_class_property
+    reason: composite_target_key
+  - source_entity: tag_property
+    source_attribute: plant_code
+    target_entity: tag
+    reason: composite_target_key
+  - source_entity: tag_property
+    source_attribute: tag_name
+    target_entity: tag
+    reason: composite_target_key
+  - source_entity: tag_property
+    source_attribute: process_stream_code
+    target_entity: process_stream_property
+    reason: target_out_of_scope
+  - source_entity: tag_property
+    source_attribute: process_activity_code
+    target_entity: process_design_property
+    reason: target_out_of_scope
+  - source_entity: tag_property
+    source_attribute: unit_of_measure_name
+    target_entity: unit_of_measure
+    reason: target_out_of_scope
+  - source_entity: equipment_property
+    source_attribute: unit_of_measure_name
+    target_entity: unit_of_measure
+    reason: target_out_of_scope

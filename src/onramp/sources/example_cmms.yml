@@ -1,5 +1,6 @@
 source: example_cmms
 arrives_as: table
+origination: founding
 feeds:
   tag:
     from: ${catalog}.bronze.example_locations
@@ -9,7 +10,12 @@ feeds:
       plant_code: plant_code
       tag_name: functional_location_code
       tag_description: description
+      process_unit_code: process_unit_code
+      tag_class_name: tag_class_name
       tag_status: status
+      designed_by_company_name: designed_by_company_name
+      production_critical_item_indicator: production_critical_item_indicator
+      safety_critical_item_indicator: safety_critical_item_indicator
   equipment:
     from: ${catalog}.bronze.example_assets
     source_id: asset_id
@@ -20,7 +26,17 @@ feeds:
       equipment_class_name: class_name
       equipment_actual_installation_date: installed_on
 claims:
+  tag.plant_code: {field: plant_code, wins_rank: 10}
+  tag.tag_name: {field: functional_location_code, wins_rank: 10}
+  tag.tag_description: {field: description, wins_rank: 10}
+  tag.process_unit_code: {field: process_unit_code, wins_rank: 10}
+  tag.tag_class_name: {field: tag_class_name, wins_rank: 10}
   tag.tag_status: {field: status, wins_rank: 10}
+  tag.designed_by_company_name: {field: designed_by_company_name, wins_rank: 10}
+  tag.production_critical_item_indicator: {field: production_critical_item_indicator, wins_rank: 10}
+  tag.safety_critical_item_indicator: {field: safety_critical_item_indicator, wins_rank: 10}
+  equipment.equipment_code: {field: asset_code, wins_rank: 10}
+  equipment.equipment_class_name: {field: class_name, wins_rank: 10}
   equipment.equipment_actual_installation_date: {field: installed_on, wins_rank: 10}
 value_maps:
   tag.tag_status:

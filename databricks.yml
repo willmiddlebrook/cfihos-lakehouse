@@ -7,6 +7,7 @@ include:
 sync:
   include:
     - model/model.yml
+    - model/generation_report.yml
     - spec/rdl/*.csv
     - src/**/*.py
     - src/**/*.sql
