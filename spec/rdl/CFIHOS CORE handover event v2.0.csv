@@ -1,0 +1,6 @@
+CFIHOS unique code,handover event name,handover event description,handover event reporting sequence number
+CFIHOS-68000502,handover for commissioning,Project milestone of information handover for the start of commissioning activity,3
+CFIHOS-68000501,handover for construction,Project milestone of information handover for the start of construction activity,2
+CFIHOS-68000500,handover for detailed engineering,Project milestone of information handover for the start of detailed engineering activity,1
+CFIHOS-68000504,handover for operations,Project milestone of information handover for the start of operations activity,5
+CFIHOS-68000503,handover for start-up,Project milestone of information handover for the safe start-up activity,4

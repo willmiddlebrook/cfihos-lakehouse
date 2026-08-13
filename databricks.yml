@@ -1,0 +1,27 @@
+bundle:
+  name: cfihos-lakehouse
+
+include:
+  - resources/*.yml
+
+sync:
+  include:
+    - model/model.yml
+    - spec/rdl/*.csv
+    - src/**/*.py
+    - src/**/*.sql
+    - src/onramp/sources/*.yml
+
+variables:
+  catalog:
+    description: Throwaway or governed Unity Catalog catalog for the kit
+    default: cfihos_dev
+
+targets:
+  dev:
+    default: true
+    mode: development
+    variables:
+      catalog: cfihos_dev
+    workspace:
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}

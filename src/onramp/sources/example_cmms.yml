@@ -1,0 +1,31 @@
+source: example_cmms
+arrives_as: table
+feeds:
+  tag:
+    from: ${catalog}.bronze.example_locations
+    source_id: location_id
+    match_on: [tag_name]
+    fields:
+      plant_code: plant_code
+      tag_name: functional_location_code
+      tag_description: description
+      tag_status: status
+  equipment:
+    from: ${catalog}.bronze.example_assets
+    source_id: asset_id
+    match_on: [equipment_manufacturer_serial_number]
+    fields:
+      equipment_code: asset_code
+      equipment_manufacturer_serial_number: serial_number
+      equipment_class_name: class_name
+      equipment_actual_installation_date: installed_on
+claims:
+  tag.tag_status: {field: status, wins_rank: 10}
+  equipment.equipment_actual_installation_date: {field: installed_on, wins_rank: 10}
+value_maps:
+  tag.tag_status:
+    OPERATING: ACTIVE
+    OUT_OF_SERVICE: INACTIVE
+normalization:
+  strip_prefixes: [LOC-, ASSET-]
+unmatched: review_queue

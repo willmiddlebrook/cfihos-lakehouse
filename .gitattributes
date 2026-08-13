@@ -1,0 +1,2 @@
+# Preserve the official Core RDL bytes and keep Git from treating CRLF as whitespace errors.
+spec/rdl/*.csv binary

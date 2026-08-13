@@ -1,0 +1,10 @@
+CFIHOS Lakehouse Kit
+
+The implementation code is Copyright (c) 2026 William Middlebrook.
+
+This repository includes CFIHOS v2.0 materials published by IOGP JIP36. The
+CFIHOS data-model documents are licensed under Creative Commons Attribution 4.0
+International (CC BY 4.0). Source: https://www.jip36-cfihos.org/cfihos-standards/
+
+The generated and deployable model is CFIHOS v2.0-aligned. It is not CFIHOS
+certified and is not part of the formal conformance program.

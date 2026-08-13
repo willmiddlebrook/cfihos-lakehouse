@@ -1,0 +1,12 @@
+.databricks/
+.pytest_cache/
+.ruff_cache/
+.venv/
+__pycache__/
+*.py[cod]
+build/
+dist/
+htmlcov/
+.coverage
+.env
+acceptance-results/

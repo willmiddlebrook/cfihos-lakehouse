@@ -1,0 +1,36 @@
+[project]
+name = "cfihos-lakehouse"
+version = "0.1.0"
+description = "A deployable CFIHOS v2.0-aligned consolidation hub for Databricks"
+requires-python = ">=3.10"
+dependencies = [
+  "PyYAML>=6,<7",
+  "databricks-sdk>=0.60,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8,<10",
+  "ruff>=0.12,<1",
+]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = false
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]

@@ -1,0 +1,22 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install '.[dev]'
+      - run: make test
+      - run: ruff check .
+      - run: python tests/check_contracts.py
+      - name: Generated files are current
+        run: git diff --exit-code -- model/model.yml model/parse_exceptions.yml src/ddl

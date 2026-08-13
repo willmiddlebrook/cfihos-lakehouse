@@ -1,0 +1,24 @@
+version: 1
+description: Configuration contract for every source; source-specific code is prohibited.
+required:
+  source: sql_identifier
+  arrives_as: [table, files]
+  feeds: mapping
+  claims: mapping
+  value_maps: mapping
+  unmatched: review_queue
+feed:
+  required:
+    from: three_part_table_or_volume_path
+    source_id: source_column
+    match_on: list_of_canonical_attributes
+    fields: canonical_attribute_to_source_column_mapping
+claim:
+  key: entity.attribute
+  required:
+    field: source_column
+    wins_rank: positive_integer
+normalization:
+  defaults: [trim, collapse_whitespace, casefold]
+  optional:
+    strip_prefixes: list_of_strings
