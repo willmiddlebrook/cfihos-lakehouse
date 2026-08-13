@@ -588,6 +588,12 @@ def _normalized_column(column: Any, functions: Any) -> Any:
     return functions.when(functions.length(text) == 0, functions.lit(None)).otherwise(text)
 
 
+def _prepared_column_name(attribute: str) -> str:
+    """Return an internal alias that is also a valid SQL identifier."""
+    validate_identifier(attribute)
+    return f"cfihos_prepared_{attribute}"
+
+
 def _spark_cast(column_name: str, datatype: str, functions: Any) -> Any:
     validate_identifier(column_name)
     if datatype not in _ALLOWED_DATATYPES:
@@ -778,7 +784,7 @@ def _checked_frame(
     prepared_names: dict[str, str] = {}
     for item in metadata.attributes:
         raw_name = f"_cfihos_raw_{item.name}"
-        prepared_name = f"_cfihos_prepared_{item.name}"
+        prepared_name = _prepared_column_name(item.name)
         raw_names[item.name] = raw_name
         prepared_names[item.name] = prepared_name
         if item.name in config.fields:

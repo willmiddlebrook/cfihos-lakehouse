@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from src.conform import (
+    _prepared_column_name,
     cast_value,
     check_row,
     entity_metadata,
@@ -216,6 +217,12 @@ def test_row_check_casts_and_never_turns_bad_values_into_silent_nulls() -> None:
     assert cast_value(" false ", "BOOLEAN") is False
     assert cast_value("2025-12-31", "DATE") == date(2025, 12, 31)
     assert cast_value("42", "BIGINT") == 42
+
+
+def test_internal_prepared_columns_are_valid_sql_identifiers() -> None:
+    assert _prepared_column_name("plant_code") == "cfihos_prepared_plant_code"
+    with pytest.raises(ValueError, match="invalid lowercase SQL identifier"):
+        _prepared_column_name("Plant Code")
 
 
 def test_row_check_uses_rdl_parent_and_enrich_rules() -> None:
