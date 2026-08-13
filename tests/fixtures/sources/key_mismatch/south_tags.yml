@@ -1,0 +1,10 @@
+source: south_tags
+into: tag
+from: test.bronze.south_tags
+key: [tag_name]
+mode: upsert
+territory: southern plants
+fields:
+  plant_code: plant_code
+  tag_name: tag_name
+

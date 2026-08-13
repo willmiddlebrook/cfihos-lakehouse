@@ -11,7 +11,7 @@ sync:
     - spec/rdl/*.csv
     - src/**/*.py
     - src/**/*.sql
-    - src/onramp/sources/*.yml
+    - src/conform/sources/*.yml
 
 variables:
   catalog:

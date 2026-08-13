@@ -1,0 +1,11 @@
+source: demo_process_units
+into: process_unit
+from: ${catalog}.bronze.demo_process_units
+key: [plant_code, process_unit_code]
+mode: upsert
+fields:
+  plant_code: plant_code
+  process_unit_code: process_unit_code
+  process_unit_name: process_unit_name
+value_maps: {}
+

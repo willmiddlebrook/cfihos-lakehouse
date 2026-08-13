@@ -1,0 +1,9 @@
+plant_code,tag_name,tag_description,process_unit_code,tag_class_code,tag_status_code,designed_by_company_name,production_critical,safety_critical
+P-004,T-001,Inlet separator,U-100,SEP,IN_SVC,Demo Design Office,Y,N
+P-004,T-002,Suction knock out drum,U-100,KOD,IN_SVC,Demo Design Office,Y,Y
+P-004,T-003,Suction pressure transmitter,U-100,PT,IN_SVC,Demo Design Office,N,Y
+P-004,T-004,Main lube oil pump,U-200,PUMP_C,IN_SVC,Demo Design Office,Y,N
+P-004,T-005,Standby lube oil pump,U-200,PUMP_C,STANDBY,Demo Design Office,N,N
+P-004,T-006,Recycle control valve,U-200,CV,IN_SVC,Demo Design Office,Y,Y
+P-004,T-007,Discharge flow transmitter,,FT,IN_SVC,Demo Design Office,N,N
+P-004,T-008,Unsupported demo class,U-200,WIDGET,IN_SVC,Demo Design Office,N,N

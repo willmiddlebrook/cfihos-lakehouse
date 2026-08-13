@@ -1,0 +1,10 @@
+source: demo_plants
+into: plant
+from: ${catalog}.bronze.demo_plants
+key: [plant_code]
+mode: upsert
+fields:
+  plant_code: plant_code
+  plant_name: plant_name
+value_maps: {}
+

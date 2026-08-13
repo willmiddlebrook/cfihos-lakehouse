@@ -1,229 +1,191 @@
 # CFIHOS Lakehouse Kit
 
-Deploy it once and you get an empty, well-labeled filing cabinet: one table per CFIHOS
-(Capital Facilities Information Handover Specification) concept (tag, equipment,
-document, ...), plus the standard's official vocabulary lists loaded as lookup tables
-(the reference data).
+## What this kit does
 
-## Using it is a four-step loop
+This repo compiles and enforces the CFIHOS v2.0 standard
+(https://www.jip36-cfihos.org/cfihos-standards/). From the standard's own
+pinned files (spec/C-DM-002 dictionary XLSX + 21 Core RDL CSVs) it produces,
+in a Unity Catalog catalog: the standard's tables with the standard's
+definitions as column comments; required fields enforced with real NOT NULL;
+the vocabulary loaded as queryable lookup tables in cfihos_ref; and a conform
+step that lands valid rows in the model and quarantines invalid rows with
+plain-English reasons. The standard, compiled and enforced — nothing else.
 
-1. Get your data into a table (Delta table, the governed table format, in Unity
-   Catalog, the workspace catalog of governed data objects — any path).
-2. Write the YAML mapping for that source.
-3. Run the job.
-4. Read the scoreboard (the health views) and work the "not sure" pile.
+In plain language: deploy the empty standard tables, load the standard's vocabulary,
+then use a small YAML file to say how each source table maps to them. Valid rows land
+in the CFIHOS tables. Invalid rows stay visible in a quarantine table with reasons you
+can act on.
 
-That's the whole product. Everything else in this repo is plumbing in service of those
-four steps.
+The result is CFIHOS v2.0-aligned. It is not CFIHOS certified and is not part of the
+formal CFIHOS conformance program.
 
-Read [HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md) first.
+## 15-minute quickstart in Databricks
 
-Current v0.1 scope is narrower than the filing-cabinet metaphor: the parser captures
-139 entity definitions from the pinned dictionary, while the deployment profile
-generates tables for 15 selected registry entities.
+You need a Unity Catalog-enabled Databricks workspace, permission to use or create a
+catalog, and serverless compute. This walkthrough uses a fresh catalog so it cannot
+mix demo rows with real data.
 
-The result is a CFIHOS v2.0-aligned asset-information registry and conformance
-workbench. One governed founding source creates the initial registry, later sources
-map to it without hiding disagreements, and stewardship, validation, and source-health
-evidence stay queryable.
+1. In your Databricks workspace, choose **Workspace > Create > Git folder** and clone
+   this repository. Open `notebooks/00_get_started.py` from that Git folder.
+2. Enter a lowercase catalog name such as `cfihos_demo_user` and run notebook 00.
+   It creates the standard's empty tables, loads the Core Reference Data Library
+   (RDL), and displays proof that both are queryable. If you cannot create catalogs,
+   ask an administrator to pre-create that catalog and rerun the notebook.
+3. In Catalog Explorer, create a schema named `bronze` in that catalog. Use **Create
+   table from file** to upload the three CSVs in `tutorial/`. Keep the filenames as
+   table names: `demo_plants`, `demo_process_units`, and `demo_tags`.
+4. The matching YAML files are in `src/conform/sources/`. Copy a demo YAML when you
+   want your own editable mapping; the checked-in copies already match these demo
+   tables. Open `notebooks/01_conform.py` and set `yaml_file` first to
+   `src/conform/sources/demo_plants.yml`.
+5. Run notebook 01 three times in this order: `demo_plants.yml`,
+   `demo_process_units.yml`, then `demo_tags.yml`. Each run validates the YAML before
+   writing, shows how many rows landed or were quarantined, and displays the reasons.
 
-Source systems remain systems of record and continue authoring their data; write-back
-is not in scope. The kit publishes a harmonized read model for analytics and AI while
-preserving source values, exceptions, and same-thing decisions.
+The notebooks write to the chosen catalog, not to Git. Copying or editing a YAML
+changes only your Git folder until you explicitly commit and push it.
 
-## Quickstart in a Databricks workspace
+The YAML is the whole source-specific contract. `from` names the governed source
+table. `into` names the standard entity. `fields` maps standard attributes to source
+columns. `value_maps` translates source codes into standard values. `key` tells the
+MERGE which row to update on a rerun.
 
-Clone this repository as a Databricks Git folder, open
-`notebooks/00_get_started.py`, and choose a throwaway Unity Catalog catalog such as
-`cfihos_tutorial_<name>`. Then follow notebooks 00 through 04 in order:
+## Demo fixture CSVs
 
-1. Run notebook 00 to create the empty filing cabinet, load the official Core RDL,
-   and create its upload Volume.
-2. Upload both neutral files from [`tutorial/`](tutorial/README.md) to that Volume with
-   Catalog Explorer.
-3. Run notebook 01 with its defaults to create `bronze.example_locations`; then repeat
-   it with `feed_table_name=example_assets` and `file_name=example_assets.csv`. Keep
-   `source_name=example_cmms` for both feeds.
-4. Run notebook 02 to preflight both configured tables, inspect the no-write report,
-   and optionally run the founding source live. The `UNKNOWN` tutorial status is
-   deliberately blocked as an untranslated code.
-5. Run notebook 03 to read every scoreboard view and execute the validator against the
-   state you just created. The tutorial does not populate the generated tag-class and
-   equipment-class registry tables, so their foreign-key checks honestly report those
-   two classification gaps; the official vocabulary is still queryable in
-   `cfihos_ref`.
-6. Use notebook 04 for any records in the human “not sure” pile.
+These are the exact files under `tutorial/`.
 
-Nothing pushes to Git unless you explicitly push. Drop the tutorial catalog when you
-finish. Before editing a real mapping, [choose evaluation or implementation
-mode](docs/EVALUATING.md); implementation mode uses a fork and pull requests because
-the pull request is the mapping approval event.
+`demo_plants.csv`:
 
-Requirements are a Unity Catalog-enabled workspace, permission to use or create the
-chosen catalog, and serverless jobs. If catalog creation is restricted, ask an
-administrator to pre-create the catalog and rerun notebook 00.
-
-## How the registry works
-
-```text
-C-DM-002 dictionary -> model/model.yml -> generated subject-area tables
-Core RDL CSVs -------------------------------------> cfihos_ref
-source table -> profile -> committed mapping -> dry run -> on-ramp
-                                                     |-> id map / review queue
-                                                     |-> ranked source claims
-                                                     `-> SCD2 registry / pending records
-registry + exception surfaces -> health views, metrics, validation, Genie
+```csv
+plant_code,plant_name
+P-004,Compressor Station 4
 ```
 
-One committed source may declare itself `founding`; unmatched founding rows mint
-deterministic, auditable spine identifiers. Other sources match only at the exact or
-uniquely normalized tiers. Everything ambiguous remains in
-`cfihos_trust.review_queue` until a steward confirms, originates, or rejects it.
+`demo_process_units.csv`:
 
-Records that are missing a required value (`reason='missing'`) or carry a value that
-cannot be cast to the datatype declared in `model/model.yml`
-(`reason='invalid_value'`) are not partially published. They remain visible in
-`cfihos_trust.pending_records` and `pending_health` until corrected. Complete records
-are materialized into the generated entity tables with SCD2 history, meaning each
-change closes the prior version instead of erasing it.
+```csv
+plant_code,process_unit_code,process_unit_name
+P-004,U-100,Inlet Separation
+P-004,U-200,Compression
+```
 
-## Add a source
+`demo_tags.csv`:
 
-1. Complete [the five-question interview](docs/source-interview.md) with the source
-   owner.
-2. Use notebook 01 to turn the source extract into a governed table and create a
-   deterministic profile.
-3. Use notebook 02 to map fields, codes, match keys, and claim precedence, then review
-   its no-write dry-run report.
-4. Follow [the mapping-proposal workflow](docs/mapping-proposals.md): commit the
-   profile, candidate source YAML, and proposal on a branch, then approve outcomes in
-   a pull request.
-5. Run the on-ramp only from the approved, committed source YAML.
+```csv
+plant_code,tag_name,tag_description,process_unit_code,tag_class_code,tag_status_code,designed_by_company_name,production_critical,safety_critical
+P-004,T-001,Inlet separator,U-100,SEP,IN_SVC,Demo Design Office,Y,N
+P-004,T-002,Suction knock out drum,U-100,KOD,IN_SVC,Demo Design Office,Y,Y
+P-004,T-003,Suction pressure transmitter,U-100,PT,IN_SVC,Demo Design Office,N,Y
+P-004,T-004,Main lube oil pump,U-200,PUMP_C,IN_SVC,Demo Design Office,Y,N
+P-004,T-005,Standby lube oil pump,U-200,PUMP_C,STANDBY,Demo Design Office,N,N
+P-004,T-006,Recycle control valve,U-200,CV,IN_SVC,Demo Design Office,Y,Y
+P-004,T-007,Discharge flow transmitter,,FT,IN_SVC,Demo Design Office,N,N
+P-004,T-008,Unsupported demo class,U-200,WIDGET,IN_SVC,Demo Design Office,N,N
+```
 
-Profiles can contain raw sample values and must be handled as data. When a profile is
-sensitive, keep it out of Git and pin the proposal against the controlled local copy.
-The mapping agent must abstain rather than guess; unmapped codes, blocked rows, and
-queued records are useful conformance findings.
+`T-007` and `T-008` are deliberately invalid. They prove that a row is never silently
+dropped or partly inserted.
 
-## Engineers and CI
+## Acceptance result
 
-Workspace evaluators can stay in the notebooks. Repository engineers and CI use these
-targets:
+Against a fresh catalog, the demo must produce exactly this result:
+
+The automated acceptance runner refuses to overwrite existing demo inputs or non-empty
+core tables.
+
+| Check | Exact result |
+|---|---:|
+| Plants landed | 1 |
+| Process units landed | 2 |
+| Tags landed | 6 |
+| Rows quarantined | 2 |
+
+The two quarantine reasons are exactly:
+
+- `process_unit_code is required and missing`
+- `WIDGET is not a valid tag class`
+
+Run all three YAMLs a second time. The landed and quarantined counts must not change;
+MERGE makes the conform step safe to rerun.
+
+## Adding more sources over time
+
+Every source maps to the model, never to another source. Classify each new YAML:
+
+1. Feeds a new entity: run it after its parents. `tests/check_sources.py` prints the
+   order; a missing parent is quarantined with a plain reason.
+2. Same entity, different rows: use the identical `key` and declare `territory`.
+3. Same rows, different columns: use `mode: enrich`. There is one writer per column,
+   and `tests/check_sources.py` prints the ownership matrix.
+4. Same rows, same columns: stop. This is an identity problem and needs its own
+   conversation in `experimental/`.
+
+The cross-source check rejects conflicting keys and undeclared overlapping writers
+before a workspace run:
 
 ```bash
 uv sync --extra dev
 make test PYTHON=.venv/bin/python
 .venv/bin/ruff check .
-databricks auth login --profile <profile>
-make bundle-validate TARGET=dev CATALOG=cfihos_dev DBX_PROFILE=<profile>
-make verify TARGET=dev CATALOG=cfihos_dev DBX_PROFILE=<profile>
 ```
 
-`make verify` deploys the bundle, runs the foundation and Core RDL load, then runs the
-executable validator. Before a release, use a dedicated throwaway catalog for the
-destructive-by-design acceptance run:
+## What this deliberately does not do
 
-```bash
-CFIHOS_ACCEPTANCE_CATALOG=cfihos_acceptance_001 \
-make acceptance TARGET=dev DBX_PROFILE=<profile>
-```
+OUT OF SCOPE for the core, permanently: deciding whether records in two
+systems describe the same physical asset (matching, crosswalks, survivorship,
+steward queues). That is a master-data problem, not a CFIHOS one. That layer
+lives untouched in experimental/ until a customer asks the question it
+answers.
 
-Review `validation_results`, exception surfaces, and `merge_audit`; the caller removes
-the acceptance catalog afterward.
+See [`experimental/README.md`](experimental/README.md) for the shelved, separate
+identity layer. The core does not write changes back to source systems.
 
-## Prove it works
+## Generated model and reference data
 
-The [manual test walkthrough](docs/manual-test.md) will provide the step-by-step
-workspace proof. Its supplied source, `MANUAL-TEST-WALKTHROUGH.md`, was not present in
-the Downloads folder, so that one document remains blocked rather than being invented.
-Automated and deployed acceptance commands remain available above.
+You never need to run the parser — model.yml and src/ddl are committed artifacts.
 
-You never need to run the parser — `model/model.yml` and `src/ddl` are committed
-artifacts; see [the model-generation guide](docs/model-generation.md) to regenerate
-when CFIHOS v2.x ships.
+Maintainers can reproduce them using
+[`docs/model-generation.md`](docs/model-generation.md). The generated model is the
+source of truth; do not hand-edit generated SQL. Reference-data loads reconcile every
+input record through `cfihos_ref.load_audit` and `cfihos_ref.load_exceptions`.
 
-## Guardrails
-
-1. Only GA and Public Preview platform features are allowed. Every Public Preview
-   dependency must be marked `[PuPr]` where used and recorded in the dependency
-   ledger below. Beta and Private Preview features are excluded, including from DEV.
-2. Customer and source-system vendor names are prohibited in code, docs, comments,
-   table names, and fixtures. The checked-in example is deliberately neutral.
-3. CFIHOS materials are published by IOGP JIP36 under CC BY 4.0. Generated output is
-   described only as “CFIHOS v2.0-aligned,” never as certified.
-4. Nothing fails silently. Parse failures, unmapped values, below-tier matches, ties,
-   losing claims, pending records, and unexplained load exceptions have named surfaces.
-5. `model/model.yml` is the generated source of truth for DDL, validation, and
-   producer/consumer contracts. Do not hand-edit generated DDL.
-6. Unity Catalog PK/FK declarations are informational. `src/validate.py` performs
-   actual enforcement; comments never imply otherwise.
+The generated tables retain implementation metadata such as `spine_id`. In Core v1 it
+is assigned only when a row with a new standard key is inserted; conformance matches on
+the YAML `key`, not by comparing identities across source systems.
 
 ## Repository map
 
 ```text
-notebooks/                      guided evaluation and operator front door
-tutorial/                       neutral two-feed CSVs for notebooks 01–04
-docs/EVALUATING.md              evaluation versus implementation Git modes
-docs/mapping-proposals.md       review and approval workflow
-spec/                           pinned CFIHOS v2.0 dictionary and Core RDL
-model/model.yml                 generated canonical contract
-src/parse_dictionary.py         XLSX-to-model generator
-src/gen_ddl.py                  model-to-subject-area DDL generator
-src/load_rdl.py                 versioned Core RDL loader
-src/onramp/                     profiler, contracts, proposals, and generic engine
-src/trust/                      identity, survivorship, materialization, stewardship
-src/front_door/                 health metrics and Genie setup
-resources/jobs.yml              serverless bundle jobs
-tests/                          contract, defect, provenance, and acceptance tests
+notebooks/00_get_started.py       deploy the empty tables and load vocabulary
+notebooks/01_conform.py           validate one source YAML and conform its table
+tutorial/                         the three neutral demo CSVs
+src/conform/sources/              source-to-standard YAML mappings
+spec/                             pinned CFIHOS dictionary and Core RDL inputs
+model/model.yml                   generated standard model
+src/ddl/                          generated Unity Catalog table DDL
+src/conform.py                    validation, row checks, MERGE, and quarantine
+src/load_rdl.py                   versioned Core RDL loader
+tests/check_sources.py            cross-source order and ownership checks
+experimental/                     separate, shelved multi-system identity work
 ```
 
-## Optional extensions
+## Platform dependency ledger
 
-The core path intentionally excludes handover/file-arrival automation, a retention
-policy for `staged_claims`, and Marketplace or Delta Sharing distribution of the
-reference data. PDF fact extraction and document file-pointer registration are not
-deployed in v0.1. UC Volumes are used only by the guided upload notebook; the on-ramp
-contract consumes governed Delta tables.
+The core uses only generally available (GA) platform features. Recheck availability
+for the target cloud and region before deployment.
 
-## Industry terms
-
-| Industry term | Plain meaning in this kit |
-|---|---|
-| Crosswalk | The ID map connecting each source identifier to one spine ID |
-| Golden record | The current registry row assembled from the winning source claims |
-| Registry / spine | The one-row-per-real-asset CFIHOS tables |
-| Master data management (MDM) consolidation hub | A read model that reconciles source systems without writing changes back to them |
-| Survivorship / source precedence | The ranked who-wins rules used when sources disagree |
-| Slowly changing dimension type 2 (SCD2) | History that closes a prior row version and inserts the changed version |
+| Capability | Status | Use in this kit |
+|---|---|---|
+| Unity Catalog and Delta Lake | GA | Governed tables, schemas, comments, MERGE, and quarantine |
+| Databricks Asset Bundles + CLI | GA | Deployment and job definitions |
+| Serverless jobs | GA | Foundation, reference-data, conform, and acceptance tasks |
+| Informational PK/FK constraints | GA | Model semantics and lineage; row checks enforce validity |
 
 ## Attribution and license
 
 CFIHOS v2.0 materials are © IOGP JIP36 and are available from
 <https://www.jip36-cfihos.org/cfihos-standards/>. The redistributed data-model
-materials carry the Creative Commons Attribution 4.0 International license. See
-[`NOTICE`](NOTICE), [the provenance register](docs/PROVENANCE.md), and
-`spec/VERSIONS.md` for exact scope, hashes, and acquisition dates. The implementation
-code is licensed under MIT. This project is CFIHOS v2.0-aligned and is not part of the
-formal CFIHOS conformance program.
-
-## Platform dependency ledger
-
-Verified 2026-08-13 against first-party feature documentation. Re-verify for the
-target cloud and region before a user-facing claim.
-
-| Capability | Status | Use |
-|---|---|---|
-| Unity Catalog, Delta, catalogs, schemas, comments | GA | Core path |
-| Databricks Asset Bundles and CLI | GA | Deployment and jobs |
-| Serverless jobs | GA | Bundle tasks |
-| Informational PK/FK constraints | GA | Lineage and semantics; validation enforces |
-| AI/BI Genie | GA | Manually configured front door |
-| UC metric views | GA | Completeness KPI; no materialization |
-| UC Volumes and `read_files` | GA | Guided file-to-table convenience |
-| `ai_parse_document` | Public Preview | Optional document-fact extraction `[PuPr]`; not core |
-| UNIQUE informational constraint | Public Preview | Not used |
-| Delta Sharing and Marketplace | GA | Optional distribution only |
-
-The core path has no Public Preview dependency. Optional `ai_parse_document` use is
-marked `[PuPr]`; metric-view materialization and Genie import/export automation remain
-excluded.
+materials carry the Creative Commons Attribution 4.0 International (CC BY 4.0)
+license. See
+[`NOTICE`](NOTICE) and [`spec/VERSIONS.md`](spec/VERSIONS.md) for the exact scope,
+hashes, and acquisition date. The implementation code is licensed under MIT.

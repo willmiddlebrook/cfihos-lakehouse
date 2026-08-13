@@ -13,7 +13,7 @@ import yaml
 
 ATTRIBUTION = """-- CFIHOS materials are published by IOGP JIP36 under CC BY 4.0.
 -- This generated output is CFIHOS v2.0-aligned; it is not CFIHOS certified.
--- PK/FK constraints are informational. The validation job performs enforcement.
+-- PK/FK constraints are informational. The conform step enforces incoming rows.
 """
 
 SKIPPED_FOREIGN_KEY_REASONS = (
@@ -43,11 +43,9 @@ class ForeignKey:
 
     def report_entry(self) -> dict[str, str]:
         return {
-            "constraint_name": self.constraint_name,
-            "source_entity": self.source_entity,
-            "source_attribute": self.source_attribute,
-            "target_entity": self.target_entity,
-            "target_attribute": self.target_attribute,
+            "child": self.source_entity,
+            "attribute": self.source_attribute,
+            "target": self.target_entity,
         }
 
 
@@ -87,9 +85,9 @@ def _foreign_key_decisions(
         if not target_name:
             continue
         relationship = {
-            "source_entity": entity["name"],
-            "source_attribute": attribute["name"],
-            "target_entity": target_name,
+            "child": entity["name"],
+            "attribute": attribute["name"],
+            "target": target_name,
         }
         if target_name not in generated_entities:
             skipped.append({**relationship, "reason": "target_out_of_scope"})
@@ -172,7 +170,7 @@ def render_entity(
     body = ",\n".join(columns + constraints)
     comment = (
         f"{entity['definition']} CFIHOS v2.0-aligned. "
-        "Declared constraints are informational; validation jobs perform enforcement."
+        "Declared constraints are informational; the conform step enforces incoming rows."
     )
     return (
         f"CREATE TABLE IF NOT EXISTS {table_name(catalog, entity)} (\n{body}\n)\n"
@@ -193,7 +191,7 @@ def _generation_report(
         for reason in SKIPPED_FOREIGN_KEY_REASONS
     }
     return {
-        "report_version": 1,
+        "report_version": 2,
         "model": {
             "name": model["metadata"]["name"],
             "cfihos_version": model["metadata"]["cfihos_version"],
@@ -201,16 +199,14 @@ def _generation_report(
             "source_sha256": model["metadata"]["source_sha256"],
         },
         "generated_entities": list(model["generation"]["spine_entities"]),
-        "foreign_keys": {
-            "summary": {
-                "considered": len(foreign_keys) + len(skipped),
-                "emitted": len(foreign_keys),
-                "skipped": len(skipped),
-                "skipped_by_reason": reason_counts,
-            },
-            "emitted": [foreign_key.report_entry() for foreign_key in foreign_keys],
-            "skipped": skipped,
+        "fk_summary": {
+            "considered": len(foreign_keys) + len(skipped),
+            "emitted": len(foreign_keys),
+            "skipped": len(skipped),
+            "skipped_by_reason": reason_counts,
         },
+        "fk_emitted": [foreign_key.report_entry() for foreign_key in foreign_keys],
+        "fk_skipped": skipped,
     }
 
 

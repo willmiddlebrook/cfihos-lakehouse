@@ -3,11 +3,8 @@ from pathlib import Path
 from types import ModuleType
 from unittest.mock import MagicMock
 
-import yaml
-
 from src.deploy_foundation import added_constraint_name, ensure_catalog, split_sql_statements
 from src.identifiers import validate_identifier, validate_version
-from src.onramp.engine import validate_config
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -26,26 +23,6 @@ def test_shared_sql_identifier_and_version_guards() -> None:
             pass
         else:
             raise AssertionError(f"unsafe value was accepted: {value}")
-
-
-def test_engine_config_producer_consumer_contracts() -> None:
-    model = yaml.safe_load((ROOT / "model" / "model.yml").read_text(encoding="utf-8"))
-    configs = (ROOT / "src" / "onramp" / "sources").glob("*.yml")
-    assert all(
-        not validate_config(yaml.safe_load(path.read_text(encoding="utf-8")), model)
-        for path in configs
-    )
-
-
-def test_exactly_one_committed_source_is_founding() -> None:
-    configs = [
-        yaml.safe_load(path.read_text(encoding="utf-8"))
-        for path in (ROOT / "src" / "onramp" / "sources").glob("*.yml")
-    ]
-    founding_sources = [
-        config["source"] for config in configs if config.get("origination") == "founding"
-    ]
-    assert len(founding_sources) == 1
 
 
 def test_sql_splitter_preserves_semicolons_and_escaped_quotes_in_comments() -> None:
@@ -76,8 +53,7 @@ def test_serverless_entrypoints_resolve_paths_without_dunder_file(monkeypatch) -
         ROOT / "src" / "deploy_foundation.py",
         ROOT / "src" / "load_rdl.py",
         ROOT / "src" / "acceptance.py",
-        ROOT / "src" / "validate.py",
-        ROOT / "src" / "onramp" / "engine.py",
+        ROOT / "src" / "conform.py",
     ]
     for index, path in enumerate(entrypoints):
         assert "raise SystemExit" not in path.read_text(encoding="utf-8")
@@ -99,3 +75,9 @@ def test_no_preview_dependency_tags_are_present() -> None:
     assert "[Beta]" not in contents
     assert "[Private Preview]" not in contents
     assert "[Experimental]" not in contents
+
+
+def test_conform_avoids_dataframe_caching_unsupported_by_serverless() -> None:
+    contents = (ROOT / "src" / "conform.py").read_text(encoding="utf-8")
+    for unsupported in (".cache(", ".persist(", ".unpersist("):
+        assert unsupported not in contents

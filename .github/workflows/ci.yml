@@ -17,8 +17,10 @@ jobs:
       - run: python -m pip install '.[dev]'
       - run: make test
       - run: ruff check .
-      - run: python tests/check_contracts.py
+      - run: python tests/check_sources.py
       - name: Generated files are current
-        run: >-
-          git diff --exit-code -- model/model.yml model/parse_exceptions.yml
-          model/generation_report.yml src/ddl
+        run: |
+          git diff --exit-code -- model/model.yml model/parse_exceptions.yml \
+            model/generation_report.yml src/ddl
+          test -z "$(git ls-files --others --exclude-standard -- \
+            model/model.yml model/parse_exceptions.yml model/generation_report.yml src/ddl)"

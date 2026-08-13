@@ -57,10 +57,9 @@ def test_generation_report_accounts_for_every_considered_foreign_key() -> None:
     report = yaml.safe_load(
         (ROOT / "model" / "generation_report.yml").read_text(encoding="utf-8")
     )
-    foreign_keys = report["foreign_keys"]
-    emitted = foreign_keys["emitted"]
-    skipped = foreign_keys["skipped"]
-    summary = foreign_keys["summary"]
+    emitted = report["fk_emitted"]
+    skipped = report["fk_skipped"]
+    summary = report["fk_summary"]
     expected_relationships = {
         (entity_name, attribute["name"], attribute["references"])
         for entity_name in model["generation"]["spine_entities"]
@@ -68,7 +67,7 @@ def test_generation_report_accounts_for_every_considered_foreign_key() -> None:
         if attribute.get("references")
     }
     reported_relationships = {
-        (item["source_entity"], item["source_attribute"], item["target_entity"])
+        (item["child"], item["attribute"], item["target"])
         for item in emitted + skipped
     }
     assert reported_relationships == expected_relationships
@@ -87,3 +86,7 @@ def test_generation_report_accounts_for_every_considered_foreign_key() -> None:
     assert summary["skipped_by_reason"] == {
         reason: reason_counts.get(reason, 0) for reason in sorted(reasons)
     }
+    assert all(set(item) == {"child", "attribute", "target"} for item in emitted)
+    assert all(
+        set(item) == {"child", "attribute", "target", "reason"} for item in skipped
+    )

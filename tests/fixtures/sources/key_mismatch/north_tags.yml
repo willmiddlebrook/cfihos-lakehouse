@@ -1,0 +1,10 @@
+source: north_tags
+into: tag
+from: test.bronze.north_tags
+key: [plant_code, tag_name]
+mode: upsert
+territory: northern plants
+fields:
+  plant_code: plant_code
+  tag_name: tag_name
+

@@ -1,6 +1,6 @@
 -- CFIHOS materials are published by IOGP JIP36 under CC BY 4.0.
 -- This generated output is CFIHOS v2.0-aligned; it is not CFIHOS certified.
--- PK/FK constraints are informational. The validation job performs enforcement.
+-- PK/FK constraints are informational. The conform step enforces incoming rows.
 
 CREATE SCHEMA IF NOT EXISTS ${catalog}.`cfihos_classification` COMMENT 'CFIHOS v2.0-aligned classification subject area.' ;
 
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS ${catalog}.`cfihos_classification`.`tag_or_equipment_
   `recorded_at` TIMESTAMP NOT NULL COMMENT '[Implementation] Time this version was recorded by the consolidation hub.',
   CONSTRAINT `pk_tag_or_equipment_class` PRIMARY KEY (`tag_or_equipment_class_name`) NOT ENFORCED
 )
-COMMENT 'A tag class or an equipment class CFIHOS v2.0-aligned. Declared constraints are informational; validation jobs perform enforcement.'
+COMMENT 'A tag class or an equipment class CFIHOS v2.0-aligned. Declared constraints are informational; the conform step enforces incoming rows.'
 TBLPROPERTIES (
   'cfihos_version' = '2.0',
   'delta.enableChangeDataFeed' = 'true',
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS ${catalog}.`cfihos_classification`.`tag_class` (
   `recorded_at` TIMESTAMP NOT NULL COMMENT '[Implementation] Time this version was recorded by the consolidation hub.',
   CONSTRAINT `pk_tag_class` PRIMARY KEY (`tag_class_name`) NOT ENFORCED
 )
-COMMENT 'A classification of tags according to the functions they are required to perform CFIHOS v2.0-aligned. Declared constraints are informational; validation jobs perform enforcement.'
+COMMENT 'A classification of tags according to the functions they are required to perform CFIHOS v2.0-aligned. Declared constraints are informational; the conform step enforces incoming rows.'
 TBLPROPERTIES (
   'cfihos_version' = '2.0',
   'delta.enableChangeDataFeed' = 'true',
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS ${catalog}.`cfihos_classification`.`equipment_class` 
   `recorded_at` TIMESTAMP NOT NULL COMMENT '[Implementation] Time this version was recorded by the consolidation hub.',
   CONSTRAINT `pk_equipment_class` PRIMARY KEY (`equipment_class_name`) NOT ENFORCED
 )
-COMMENT 'A classification of equipment and equipment models, according to its physical assembly of component(s) CFIHOS v2.0-aligned. Declared constraints are informational; validation jobs perform enforcement.'
+COMMENT 'A classification of equipment and equipment models, according to its physical assembly of component(s) CFIHOS v2.0-aligned. Declared constraints are informational; the conform step enforces incoming rows.'
 TBLPROPERTIES (
   'cfihos_version' = '2.0',
   'delta.enableChangeDataFeed' = 'true',
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS ${catalog}.`cfihos_classification`.`tag_class_equipme
   `recorded_at` TIMESTAMP NOT NULL COMMENT '[Implementation] Time this version was recorded by the consolidation hub.',
   CONSTRAINT `pk_tag_class_equipment_class_relationship` PRIMARY KEY (`tag_class_name`, `equipment_class_name`) NOT ENFORCED
 )
-COMMENT 'An equipment class that can be used to implement the function of a tag class CFIHOS v2.0-aligned. Declared constraints are informational; validation jobs perform enforcement.'
+COMMENT 'An equipment class that can be used to implement the function of a tag class CFIHOS v2.0-aligned. Declared constraints are informational; the conform step enforces incoming rows.'
 TBLPROPERTIES (
   'cfihos_version' = '2.0',
   'delta.enableChangeDataFeed' = 'true',

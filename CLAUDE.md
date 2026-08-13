@@ -119,9 +119,7 @@ Lowercase snake case everywhere. Schemas: cfihos_<subject_area>, cfihos_ref,
 cfihos_quarantine. Always three-part names. Serverless jobs; no DBFS paths.
 Catalog names are validated identifiers before any SQL interpolation.
 
-## Transition note
+## Core v1 status
 
-Until the core-v1 build prompt completes, this tree still contains the
-legacy modules listed under MOVE and the old README. This contract governs
-regardless: new work follows the Scope above, and the first task is the
-build prompt in CORE-V1-RESET.md, run on branch core-v1.
+The core-v1 build is complete. Core work follows the Scope and guardrails
+above; the separate identity layer remains shelved under `experimental/`.

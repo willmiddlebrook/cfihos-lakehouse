@@ -1,0 +1,32 @@
+source: demo_tags
+into: tag
+from: ${catalog}.bronze.demo_tags
+key: [plant_code, tag_name]
+mode: upsert
+fields:
+  plant_code: plant_code
+  tag_name: tag_name
+  tag_description: tag_description
+  process_unit_code: process_unit_code
+  tag_class_name: tag_class_code
+  tag_status: tag_status_code
+  designed_by_company_name: designed_by_company_name
+  production_critical_item_indicator: production_critical
+  safety_critical_item_indicator: safety_critical
+value_maps:
+  tag_class_name:
+    SEP: separator
+    KOD: knock out drum
+    PT: pressure transmitter
+    PUMP_C: centrifugal pump
+    CV: control valve
+    FT: flow transmitter
+  tag_status:
+    IN_SVC: in operation
+    STANDBY: standby
+  production_critical_item_indicator:
+    Y: "true"
+    N: "false"
+  safety_critical_item_indicator:
+    Y: "true"
+    N: "false"

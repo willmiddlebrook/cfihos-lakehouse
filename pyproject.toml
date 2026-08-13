@@ -1,7 +1,7 @@
 [project]
 name = "cfihos-lakehouse"
 version = "0.1.0"
-description = "A deployable CFIHOS v2.0-aligned consolidation hub for Databricks"
+description = "Compile and enforce the CFIHOS v2.0 standard in Databricks"
 requires-python = ">=3.10"
 dependencies = [
   "PyYAML>=6,<7",
@@ -21,6 +21,7 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+extend-exclude = ["experimental"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]

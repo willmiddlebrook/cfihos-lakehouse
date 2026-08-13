@@ -1,6 +1,6 @@
 -- CFIHOS materials are published by IOGP JIP36 under CC BY 4.0.
 -- This generated output is CFIHOS v2.0-aligned; it is not CFIHOS certified.
--- PK/FK constraints are informational. The validation job performs enforcement.
+-- PK/FK constraints are informational. The conform step enforces incoming rows.
 
 ALTER TABLE ${catalog}.`cfihos_functional_asset`.`process_unit`
 ADD CONSTRAINT `fk_process_unit_plant_code` FOREIGN KEY (`plant_code`) REFERENCES ${catalog}.`cfihos_functional_asset`.`plant` (`plant_code`) NOT ENFORCED;

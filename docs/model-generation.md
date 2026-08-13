@@ -3,7 +3,7 @@
 # Regenerating the CFIHOS-aligned model
 
 CFIHOS means Capital Facilities Information Handover Specification. For the operator
-workflow and plain-language terms, read [how the system works](HOW-IT-WORKS.md).
+workflow, start with the [repository guide](../README.md).
 
 Workspace users do not need to run the parser. `model/model.yml`, the generation
 report, and `src/ddl/` are committed build artifacts. This procedure is for
@@ -29,9 +29,9 @@ relationship cardinality text, and writes every rejected row to
 `model/parse_exceptions.yml`. The pinned v2.0 dictionary currently parses with no
 exceptions.
 
-The deployment generation profile selects 15 of those 139 entity definitions as the
-current registry spine and generates tables only for that selected set. Definitions
-outside the 15 remain available in `model/model.yml`; they are not deployed tables.
+The deployment generation profile selects 15 of those 139 entity definitions and
+generates tables only for that set. Definitions outside the 15 remain available in
+`model/model.yml`; they are not deployed tables.
 
 The Core RDL contains 43,753 CSV records. After normalization, 42,472 natural keys
 are unique and 1,281 rows are byte-for-byte duplicates. The loader records each

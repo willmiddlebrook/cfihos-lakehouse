@@ -1,4 +1,4 @@
-"""Apply all generated foundation, trust, health, and front-door SQL assets."""
+"""Apply the generated CFIHOS foundation and quarantine SQL assets."""
 
 from __future__ import annotations
 
@@ -69,7 +69,7 @@ def ensure_catalog(spark: Any, catalog: str) -> None:
         return
     spark.sql(
         f"CREATE CATALOG IF NOT EXISTS `{catalog}` "
-        "COMMENT 'CFIHOS v2.0-aligned consolidation hub'"
+        "COMMENT 'CFIHOS v2.0-aligned compiled standard'"
     )
 
 
@@ -96,9 +96,7 @@ def deploy(spark: Any, root: Path, catalog: str) -> None:
     ensure_catalog(spark, catalog)
     paths = [
         *sorted((root / "src" / "ddl").glob("*.sql")),
-        root / "src" / "trust" / "ddl_idmap.sql",
-        root / "src" / "trust" / "health_views.sql",
-        root / "src" / "front_door" / "metric_views.sql",
+        root / "src" / "quarantine.sql",
     ]
     missing = [str(path) for path in paths if not path.exists()]
     if missing:

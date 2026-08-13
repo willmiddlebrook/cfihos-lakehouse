@@ -1,0 +1,10 @@
+source: primary_tags
+into: tag
+from: test.bronze.primary_tags
+key: [plant_code, tag_name]
+mode: upsert
+fields:
+  plant_code: plant_code
+  tag_name: tag_name
+  tag_description: description
+

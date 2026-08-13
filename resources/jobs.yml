@@ -36,85 +36,25 @@ resources:
               - --rdl-version
               - "2.0"
           environment_key: default
-        - task_key: enforce_constraints
-          depends_on:
-            - task_key: load_core_rdl
-          spark_python_task:
-            python_file: ../src/validate.py
-            parameters:
-              - --catalog
-              - ${var.catalog}
-          environment_key: yaml
       environments:
         - environment_key: default
           spec:
             client: "1"
-        - environment_key: yaml
-          spec:
-            client: "1"
-            dependencies:
-              - PyYAML==6.0.2
 
-    onramp:
-      name: ${bundle.target}-cfihos-onramp
+    conform:
+      name: ${bundle.target}-cfihos-conform
       parameters:
-        - name: source_config
-          default: example_cmms.yml
-        - name: dry_run
-          default: "false"
+        - name: yaml_file
+          default: src/conform/sources/demo_plants.yml
       tasks:
-        - task_key: run_onramp
+        - task_key: conform_source
           spark_python_task:
-            python_file: ../src/onramp/engine.py
+            python_file: ../src/conform.py
             parameters:
               - --catalog
               - ${var.catalog}
-              - --config
-              - "{{job.parameters.source_config}}"
-              - "--dry-run={{job.parameters.dry_run}}"
-          environment_key: yaml
-      environments:
-        - environment_key: yaml
-          spec:
-            client: "1"
-            dependencies:
-              - PyYAML==6.0.2
-
-    profile_source:
-      name: ${bundle.target}-cfihos-profile-source
-      parameters:
-        - name: source
-          default: example_cmms
-        - name: table
-          default: ${var.catalog}.bronze.example_locations
-      tasks:
-        - task_key: profile_source
-          spark_python_task:
-            python_file: ../src/onramp/profile_source.py
-            parameters:
-              - --catalog
-              - ${var.catalog}
-              - --source
-              - "{{job.parameters.source}}"
-              - --table
-              - "{{job.parameters.table}}"
-          environment_key: yaml
-      environments:
-        - environment_key: yaml
-          spec:
-            client: "1"
-            dependencies:
-              - PyYAML==6.0.2
-
-    validate:
-      name: ${bundle.target}-cfihos-validate
-      tasks:
-        - task_key: enforce_constraints
-          spark_python_task:
-            python_file: ../src/validate.py
-            parameters:
-              - --catalog
-              - ${var.catalog}
+              - --yaml-file
+              - "{{job.parameters.yaml_file}}"
           environment_key: yaml
       environments:
         - environment_key: yaml
@@ -126,46 +66,14 @@ resources:
     acceptance:
       name: ${bundle.target}-cfihos-acceptance
       tasks:
-        - task_key: deploy_foundation
-          spark_python_task:
-            python_file: ../src/deploy_foundation.py
-            parameters:
-              - --catalog
-              - ${var.catalog}
-          environment_key: default
-        - task_key: load_core_rdl
-          depends_on:
-            - task_key: deploy_foundation
-          spark_python_task:
-            python_file: ../src/load_rdl.py
-            parameters:
-              - --catalog
-              - ${var.catalog}
-              - --rdl-version
-              - "2.0"
-          environment_key: default
         - task_key: run_acceptance
-          depends_on:
-            - task_key: load_core_rdl
           spark_python_task:
             python_file: ../src/acceptance.py
             parameters:
               - --catalog
               - ${var.catalog}
           environment_key: yaml
-        - task_key: enforce_constraints
-          depends_on:
-            - task_key: run_acceptance
-          spark_python_task:
-            python_file: ../src/validate.py
-            parameters:
-              - --catalog
-              - ${var.catalog}
-          environment_key: yaml
       environments:
-        - environment_key: default
-          spec:
-            client: "1"
         - environment_key: yaml
           spec:
             client: "1"
