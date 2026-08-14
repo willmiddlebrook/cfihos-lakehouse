@@ -25,12 +25,17 @@ You need a Unity Catalog-enabled Databricks workspace, permission to use or crea
 catalog, and serverless compute. This walkthrough uses a fresh catalog so it cannot
 mix demo rows with real data.
 
+For the exact widget clicks, upload checks, expected SQL results, rerun proof, and
+first-run troubleshooting, follow
+[`docs/databricks-walkthrough.md`](docs/databricks-walkthrough.md).
+
 1. In your Databricks workspace, choose **Workspace > Create > Git folder** and clone
    this repository. Open `notebooks/00_get_started.py` from that Git folder.
-2. Enter a lowercase catalog name such as `cfihos_demo_user` and run notebook 00.
-   It creates the standard's empty tables, loads the Core Reference Data Library
-   (RDL), and displays proof that both are queryable. If you cannot create catalogs,
-   ask an administrator to pre-create that catalog and rerun the notebook.
+2. Run notebook 00's first Python setup cell once, set its `catalog` widget to a
+   lowercase name such as `cfihos_demo_user`, then run the full notebook. It creates
+   the standard's empty tables, loads the Core Reference Data Library (RDL), and
+   displays proof that both are queryable. If you cannot create catalogs, ask an
+   administrator to pre-create one and grant `USE CATALOG` plus `CREATE SCHEMA`.
 3. In Catalog Explorer, create a schema named `bronze` in that catalog. Use **Create
    table from file** to upload the three CSVs in `tutorial/`. Keep the filenames as
    table names: `demo_plants`, `demo_process_units`, and `demo_tags`.
@@ -38,9 +43,11 @@ mix demo rows with real data.
    want your own editable mapping; the checked-in copies already match these demo
    tables. Open `notebooks/01_conform.py` and set `yaml_file` first to
    `src/conform/sources/demo_plants.yml`.
-5. Run notebook 01 three times in this order: `demo_plants.yml`,
-   `demo_process_units.yml`, then `demo_tags.yml`. Each run validates the YAML before
-   writing, shows how many rows landed or were quarantined, and displays the reasons.
+5. In notebook 01, run the `%pip` and Python setup cells once, then use the exact same
+   `catalog` value as notebook 00. Run it three times in this order:
+   `demo_plants.yml`, `demo_process_units.yml`, then `demo_tags.yml`. Each run
+   validates the YAML before writing, shows this-run and persisted totals, and
+   displays retained quarantine reasons.
 
 The notebooks write to the chosen catalog, not to Git. Copying or editing a YAML
 changes only your Git folder until you explicitly commit and push it.

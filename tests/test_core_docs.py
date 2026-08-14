@@ -89,6 +89,27 @@ def test_conform_notebook_shows_persisted_results_and_retained_rejections() -> N
         assert required in contents
 
 
+def test_readme_links_the_verified_databricks_walkthrough() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    walkthrough = (ROOT / "docs" / "databricks-walkthrough.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "docs/databricks-walkthrough.md" in readme
+    for required in (
+        "Run its first Python setup cell once",
+        "exact same value used in notebook 00",
+        "demo_plants.yml",
+        "demo_process_units.yml",
+        "demo_tags.yml",
+        "1 / 2 / 6 / 2",
+        "process_unit_code is required and missing",
+        "WIDGET is not a valid tag class",
+        "omit the `.py` suffix",
+    ):
+        assert required in walkthrough
+
+
 def test_experimental_scope_and_open_issues_are_recorded_verbatim() -> None:
     contents = (ROOT / "experimental" / "README.md").read_text(encoding="utf-8")
     assert (
